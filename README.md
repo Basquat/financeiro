@@ -1,10 +1,10 @@
-# Financeiro - Sistema de Controle Financeiro Compartilhado
+# Financeiro - Sistema de Controle Financeiro 
 
-Aplicação full-stack para gestão financeira conjunta de casais, implementada com arquitetura moderna e foco em segurança, usabilidade e escalabilidade.
+Aplicação full-stack para gestão financeira, implementada com arquitetura moderna e foco em segurança, usabilidade e escalabilidade.
 
 ## Visão Geral
 
-O Financeiro é um sistema de gestão financeira projetado para atender às necessidades de casais que desejam controlar finanças conjuntas e individuais de forma integrada. A plataforma oferece funcionalidades completas para controle de gastos, receitas, parcelamentos, metas financeiras e planejamento orçamentário, com interface responsiva acessível via navegador ou aplicativo mobile.
+O Financeiro é um sistema de gestão financeira projetado para atender às necessidades de pessoas que desejam controlar finanças de forma integrada. A plataforma oferece funcionalidades completas para controle de gastos, receitas, parcelamentos, metas financeiras e planejamento orçamentário, com interface responsiva acessível via navegador ou aplicativo mobile.
 
 ## Arquitetura Técnica
 
