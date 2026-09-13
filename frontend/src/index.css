@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: theme('colors.line');
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: theme('colors.ink');
+    color: theme('colors.text');
+    font-family: theme('fontFamily.sans');
+    font-feature-settings: 'ss01' 1, 'cv05' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Native form controls readable on dark */
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: theme('colors.gold.DEFAULT');
+    color: theme('colors.ink');
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.line');
+    border-radius: 999px;
+    border: 3px solid theme('colors.ink');
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.surface-3');
+  }
+}
+
+@layer components {
+  /* Ledger amounts share one treatment everywhere they appear */
+  .amount {
+    font-family: theme('fontFamily.mono');
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .field-input {
+    @apply w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 text-[15px] text-text
+      placeholder:text-text-mute outline-none transition
+      focus:border-gold/70 focus:ring-2 focus:ring-gold/25;
+  }
+
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-gold/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

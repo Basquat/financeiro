@@ -1,0 +1,98 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: "URL da API (com /api no fim). Ex.: https://sua-api.exemplo.com/api"
+        required: false
+        type: string
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolver URL do backend
+        id: cfg
+        run: |
+          URL="${{ github.event.inputs.backend_url }}"
+          [ -z "$URL" ] && URL="${{ vars.BACKEND_URL }}"
+          if [ -z "$URL" ]; then
+            URL="https://SEU-BACKEND.exemplo.com/api"
+            echo "::warning::Sem URL de backend — o APK compila mas nao conecta. Rode em 'Run workflow' com a sua URL."
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "### APK apontando para: \`$URL\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+
+      - run: sdkmanager "platform-tools" "platforms;android-36"
+
+      - name: npm ci
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: npm run build
+        working-directory: frontend
+        env:
+          VITE_BACKEND_URL: ${{ steps.cfg.outputs.url }}
+        run: npm run build
+
+      - name: cap sync android
+        working-directory: frontend
+        run: npx cap sync android
+
+      - name: gradlew assembleDebug
+        working-directory: frontend/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleDebug
+
+      - run: cp frontend/android/app/build/outputs/apk/debug/app-debug.apk financas-do-casal.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: financas-do-casal-apk
+          path: financas-do-casal.apk
+          if-no-files-found: error
+
+      - name: Release "mobile-latest"
+        uses: softprops/action-gh-release@v2
+        continue-on-error: true
+        with:
+          tag_name: mobile-latest
+          name: APK de teste (mais recente)
+          body: |
+            APK de teste. Backend: `${{ steps.cfg.outputs.url }}` — commit ${{ github.sha }}.
+            Baixe `financas-do-casal.apk`, transfira para o celular e instale
+            (permita "instalar de fontes desconhecidas").
+          files: financas-do-casal.apk
+          make_latest: "false"
+
+      - name: Logs do npm (se falhar)
+        if: failure()
+        run: |
+          echo "===== npm debug logs ====="
+          for f in ~/.npm/_logs/*.log; do echo "--- $f ---"; tail -80 "$f"; done 2>/dev/null || echo "(sem logs)"

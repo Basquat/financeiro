@@ -1,0 +1,26 @@
+# Production profile (single container: Spring serves the API and the React app).
+# Point at a Postgres instance with either:
+#   - discrete vars: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD   (most PaaS providers set these)
+#   - or a full JDBC url in SPRING_DATASOURCE_URL / SUPABASE_DB_URL
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${SUPABASE_DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:postgres}}}
+    username: ${DB_USER:${SUPABASE_DB_USER:postgres}}
+    password: ${DB_PASSWORD:${SUPABASE_DB_PASSWORD:postgres}}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+# No SMTP in a minimal deploy -> don't let the mail health check fail startup.
+# (The e-mail-change code is logged instead of sent when SMTP is unset.)
+management:
+  health:
+    mail:
+      enabled: false
+
+logging:
+  level:
+    root: INFO
+    com.financeiro.casal: INFO
+    org.hibernate.SQL: WARN
