@@ -117,23 +117,6 @@ docker build -t financeiro:latest .
 docker run -p 8080:8080 --env-file .env financeiro:latest
 ```
 
-## Documentação e Recursos
-
-- [API Documentation](API.md) - Especificação completa dos endpoints REST
-- [Mobile Deployment Guide](MOBILE.md) - Instruções para geração e distribuição do APK Android
-- [Database Schema](supabase/schema.sql) - Estrutura do banco de dados com dados de exemplo
-- [Backend Environment Template](backend/.env.example) - Variáveis de configuração necessárias
-- [Frontend Environment Template](frontend/.env.example) - Configurações do cliente web
-
-## Considerações de Uso Commercial
-
-Este sistema está pronto para implementação em ambientes de produção com:
-- Arquitetura segura seguindo padrões OWASP ASVS Level 2
-- Documentação técnica completa para manutenção e evolução
-- Código modular e testável facilitando extensões funcionais
-- Suporte a internacionalização (i18n) preparado para expansão multilingual
-- Log estruturado compatível com sistemas de observabilidade (ELK, Datadog, etc.)
-
 ## Licença
 
 Este projeto está licenciado sob os termos da Licença MIT. Consulte o arquivo LICENSE para detalhes completos.
