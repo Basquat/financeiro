@@ -1,0 +1,40 @@
+# Local run of the app image (React + API on one port) against Postgres.
+#   docker compose up --build   ->   http://localhost:8080
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: dev-only-change-me
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: financeiro
+      DB_USER: financeiro
+      DB_PASSWORD: financeiro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: financeiro
+      POSTGRES_USER: financeiro
+      POSTGRES_PASSWORD: financeiro
+    ports:
+      - "5432:5432"
+    volumes:
+      - financeiro_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U financeiro"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  financeiro_pg:

@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: casal-financeiro
+  datasource:
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SUPABASE_DB_USER:postgres}
+    password: ${SUPABASE_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASS:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: ${PORT:8080}
+
+# JWT Configuration
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-super-secret-key-change-in-production-please}
+    expiration: ${JWT_EXPIRATION_MS:86400000} # 24 hours
+    refresh-token:
+      expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 days
+  mail:
+    from: ${MAIL_FROM:${SMTP_USER:no-reply@financeiro-casal.local}}
+  email-verification:
+    expiration-minutes: ${EMAIL_VERIFICATION_EXP_MIN:15}
+
+# Supabase Configuration
+supabase:
+  url: ${SUPABASE_URL:}
+  anon-key: ${SUPABASE_ANON_KEY:}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+
+# Actuator (kept under /api to match the frontend and deploy config)
+management:
+  endpoints:
+    web:
+      base-path: /api/actuator
+
+# CORS — "*" por padrão (API só com token, sem cookies). Restrinja com CORS_ALLOWED_ORIGINS.
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+
+logging:
+  level:
+    root: INFO
+    com.financeiro.casal: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG

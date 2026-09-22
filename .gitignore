@@ -1,0 +1,25 @@
+# Build output
+target/
+dist/
+build/
+backend/.frontend-cache/
+backend/.localdb/
+
+# Dependencies
+node_modules/
+
+# Environment / secrets  (keep the *.env.example templates)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.neon

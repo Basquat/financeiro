@@ -1,0 +1,5 @@
+# Replace {VM_PUBLIC_IP} with dashes, e.g. 132.145.10.20 -> 132-145-10-20.sslip.io
+# sslip.io resolves that hostname to the IP embedded in it, and Caddy issues a free TLS cert for it automatically.
+{VM_PUBLIC_IP_DASHED}.sslip.io {
+	reverse_proxy app:8080
+}
