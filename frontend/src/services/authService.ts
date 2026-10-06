@@ -19,6 +19,22 @@ export const authService = {
     return data;
   },
 
+  async pinLogin(pin: string): Promise<AuthResult> {
+    const { data } = await api.post<AuthResult>('/auth/pin/login', { pin });
+    tokenStore.set(data.token);
+    return data;
+  },
+
+  async setPin(currentPassword: string, pin: string): Promise<AuthResult> {
+    const { data } = await api.post<{ user: User; message: string }>('/auth/pin/set', { currentPassword, pin });
+    return { user: data.user, token: tokenStore.get() || '' };
+  },
+
+  async disablePin(currentPassword: string): Promise<AuthResult> {
+    const { data } = await api.delete('/auth/pin', { data: { currentPassword } });
+    return { user: (data as { user: User }).user, token: tokenStore.get() || '' };
+  },
+
   logout() {
     tokenStore.clear();
   },

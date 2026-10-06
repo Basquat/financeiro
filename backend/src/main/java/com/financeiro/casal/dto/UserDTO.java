@@ -30,6 +30,8 @@ public class UserDTO {
 
     private Double salary;
 
+    private Boolean pinEnabled;
+
     private BudgetSettingsDTO budget;
 
     public static UserDTO from(User u) {
@@ -39,6 +41,7 @@ public class UserDTO {
                 .name(u.getName())
                 .avatarUrl(u.getAvatarUrl())
                 .salary(u.getSalary())
+                .pinEnabled(u.getPinEnabled())
                 .budget(BudgetSettingsDTO.builder()
                         .housingCost(u.getHousingCost())
                         .householdSize(u.getHouseholdSize())

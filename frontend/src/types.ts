@@ -22,6 +22,7 @@ export interface User {
   avatarUrl?: string | null;
   salary?: number | null;
   budget?: BudgetSettings | null;
+  pinEnabled?: boolean;
 }
 
 export interface AuthResult {

@@ -58,6 +58,12 @@ public class User implements UserDetails {
     @Column(name = "budget_uses_household_income")
     private Boolean budgetUsesHouseholdIncome;
 
+    @Column(name = "pin_hash")
+    private String pinHash;
+
+    @Column(name = "pin_enabled")
+    private Boolean pinEnabled = false;
+
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> roles;
 

@@ -18,11 +18,23 @@ interface AuthState {
 const useAuthStore = create<AuthState>((set) => ({
   user: null,
   status: tokenStore.get() ? 'loading' : 'anonymous',
-  setUser: (user) => set({ user, status: user ? 'authenticated' : 'anonymous' }),
+  setUser: (user) => {
+    set({ user, status: user ? 'authenticated' : 'anonymous' });
+    try {
+      localStorage.setItem('financeiro.pin_enabled', user?.pinEnabled ? 'true' : 'false');
+    } catch {
+      /* noop */
+    }
+  },
   setStatus: (status) => set({ status }),
   patchUser: (patch) => set((s) => ({ user: s.user ? { ...s.user, ...patch } : s.user })),
   logout: () => {
     authService.logout();
+    try {
+      localStorage.removeItem('financeiro.pin_enabled');
+    } catch {
+      /* noop */
+    }
     set({ user: null, status: 'anonymous' });
   },
 }));
@@ -78,6 +90,10 @@ export function useAuthActions() {
       const { user } = await authService.register(name, email, password);
       setUser(user);
     },
+    async pinLogin(pin: string) {
+      const { user } = await authService.pinLogin(pin);
+      setUser(user);
+    },
     patchUser,
     logout,
   };
@@ -88,3 +104,5 @@ export function useCurrentUser(): User {
   if (!user) throw new Error('useCurrentUser used outside an authenticated tree');
   return user;
 }
+
+export { useAuthStore };

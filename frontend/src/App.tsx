@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/primitives';
 import Accounts from '@/pages/Accounts';
 import Dashboard from '@/pages/Dashboard';
 import Login from '@/pages/Login';
+import PinLogin from '@/pages/PinLogin';
 import Planejar from '@/pages/Planejar';
 import Profile from '@/pages/Profile';
 import Transactions from '@/pages/Transactions';
@@ -36,10 +37,15 @@ function Shell() {
   if (isLoading) return <Splash />;
 
   if (!isAuthenticated) {
+    const pinEnabled = typeof window !== 'undefined' && localStorage.getItem('financeiro.pin_enabled') === 'true';
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/pin-login" element={<PinLogin />} />
+        <Route
+          path="*"
+          element={<Navigate to={pinEnabled ? '/pin-login' : '/login'} replace />}
+        />
       </Routes>
     );
   }
