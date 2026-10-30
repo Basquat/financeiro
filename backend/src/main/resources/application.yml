@@ -7,6 +7,8 @@ spring:
     password: ${SUPABASE_DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
+    # explicit: Hibernate doesn't need a live connection at boot to pick the dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: true
