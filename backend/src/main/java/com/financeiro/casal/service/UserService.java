@@ -36,6 +36,9 @@ public class UserService {
     @Transactional
     public User updateAvatar(Long userId, String avatarUrl) {
         String trimmed = avatarUrl == null || avatarUrl.isBlank() ? null : avatarUrl.trim();
+        if (trimmed != null && !trimmed.startsWith("data:image/") && !trimmed.startsWith("https://")) {
+            throw new RuntimeException("Formato de imagem inválido.");
+        }
         if (trimmed != null && trimmed.length() > 700_000) {
             throw new RuntimeException("Imagem muito grande. Escolha uma menor.");
         }

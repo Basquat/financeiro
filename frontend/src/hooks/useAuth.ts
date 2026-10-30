@@ -22,6 +22,9 @@ const useAuthStore = create<AuthState>((set) => ({
     set({ user, status: user ? 'authenticated' : 'anonymous' });
     try {
       localStorage.setItem('financeiro.pin_enabled', user?.pinEnabled ? 'true' : 'false');
+      // The PIN only unlocks this account, so the PIN screen needs to know which one.
+      if (user?.pinEnabled) localStorage.setItem('financeiro.pin_email', user.email);
+      else localStorage.removeItem('financeiro.pin_email');
     } catch {
       /* noop */
     }
@@ -32,6 +35,7 @@ const useAuthStore = create<AuthState>((set) => ({
     authService.logout();
     try {
       localStorage.removeItem('financeiro.pin_enabled');
+      localStorage.removeItem('financeiro.pin_email');
     } catch {
       /* noop */
     }

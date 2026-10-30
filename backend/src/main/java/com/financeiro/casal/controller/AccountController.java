@@ -6,6 +6,7 @@ import com.financeiro.casal.dto.UserSummaryDTO;
 import com.financeiro.casal.model.Account;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.AccountService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,12 +35,11 @@ public class AccountController {
 
     @PostMapping
     public ResponseEntity<?> createAccount(@AuthenticationPrincipal User currentUser,
-                                           @RequestBody AccountRequestDTO request) {
+                                           @Valid @RequestBody AccountRequestDTO request) {
         try {
             Account account = Account.builder()
                     .name(request.getName())
                     .isJoint(request.getIsJoint())
-                    .currentBalance(0.0)
                     .build();
             return ResponseEntity.ok(toDTO(accountService.createAccount(account, currentUser.getId())));
         } catch (Exception e) {
@@ -50,7 +50,7 @@ public class AccountController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAccount(@AuthenticationPrincipal User currentUser,
                                            @PathVariable Long id,
-                                           @RequestBody AccountRequestDTO request) {
+                                           @Valid @RequestBody AccountRequestDTO request) {
         try {
             Account updated = accountService.updateAccount(id, request.getName(), request.getIsJoint(), currentUser);
             return ResponseEntity.ok(toDTO(updated));
@@ -74,7 +74,7 @@ public class AccountController {
                 .id(account.getId())
                 .name(account.getName())
                 .isJoint(account.getIsJoint())
-                .currentBalance(account.getCurrentBalance())
+                .currentBalance(accountService.balanceOf(account.getId()))
                 .owners(account.getOwners() == null ? List.of() : account.getOwners().stream()
                         .map(owner -> UserSummaryDTO.builder()
                                 .id(owner.getId())

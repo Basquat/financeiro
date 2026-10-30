@@ -1,5 +1,6 @@
 package com.financeiro.casal.dto;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
@@ -24,6 +25,7 @@ public class InstallmentPlanRequestDTO {
 
     @NotNull(message = "Valor total é obrigatório")
     @Positive(message = "Valor total deve ser positivo")
+    @Digits(integer = 12, fraction = 2, message = "Valor inválido (máx. 2 casas decimais)")
     private Double totalAmount;
 
     @NotNull(message = "Data de vencimento é obrigatória")
@@ -33,14 +35,12 @@ public class InstallmentPlanRequestDTO {
     @Size(max = 100, message = "Categoria deve ter no máximo 100 caracteres")
     private String category;
 
-    @NotNull(message = "Usuário é obrigatório")
-    private Long userId;
-
     // Optional: how many installments are still to be paid. Defaults to 1 if omitted.
     @PositiveOrZero(message = "Número de parcelas não pode ser negativo")
     private Integer installmentsLeft;
 
     // Optional: amount still owed. Defaults to totalAmount if omitted.
     @PositiveOrZero(message = "Valor restante não pode ser negativo")
+    @Digits(integer = 12, fraction = 2, message = "Valor inválido (máx. 2 casas decimais)")
     private Double remainingAmount;
 }

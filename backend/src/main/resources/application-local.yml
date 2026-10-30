@@ -21,6 +21,10 @@ spring:
     username: ${SMTP_USER:}
     password: ${SMTP_PASS:}
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:local-dev-only-secret-never-use-in-production}
+
 # Sem SMTP configurado, o código de troca de e-mail aparece no log.
 management:
   health:

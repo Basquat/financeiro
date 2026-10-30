@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.Optional;
@@ -45,7 +46,12 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO request) {
-        Optional<User> user = authService.login(request.getEmail(), request.getPassword());
+        Optional<User> user;
+        try {
+            user = authService.login(request.getEmail(), request.getPassword());
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
+        }
         if (user.isPresent()) {
             return ResponseEntity.ok(Map.of(
                     "user", toDTO(user.get()),
@@ -53,13 +59,6 @@ public class AuthController {
             ));
         }
         return ResponseEntity.status(401).body(Map.of("error", "Credenciais inválidas"));
-    }
-
-    @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@RequestParam String email) {
-        return authService.findByEmail(email)
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(toDTO(u)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/pin/set")
@@ -79,7 +78,7 @@ public class AuthController {
 
     @PostMapping("/pin/login")
     public ResponseEntity<?> pinLogin(@Valid @RequestBody PinLoginRequest request) {
-        Optional<User> user = pinService.loginWithPin(request.getPin());
+        Optional<User> user = pinService.loginWithPin(request.getEmail(), request.getPin());
         if (user.isPresent()) {
             return ResponseEntity.ok(Map.of(
                     "user", toDTO(user.get()),

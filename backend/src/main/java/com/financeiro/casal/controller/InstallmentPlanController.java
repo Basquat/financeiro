@@ -6,6 +6,7 @@ import com.financeiro.casal.dto.UserSummaryDTO;
 import com.financeiro.casal.model.InstallmentPlan;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.InstallmentPlanService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,10 +23,9 @@ public class InstallmentPlanController {
 
     @PostMapping
     public ResponseEntity<?> create(@AuthenticationPrincipal User currentUser,
-                                    @RequestBody InstallmentPlanRequestDTO request) {
+                                    @Valid @RequestBody InstallmentPlanRequestDTO request) {
         try {
-            Long userId = request.getUserId() != null ? request.getUserId() : currentUser.getId();
-            InstallmentPlan saved = installmentPlanService.createInstallmentPlan(fromRequest(request), userId);
+            InstallmentPlan saved = installmentPlanService.createInstallmentPlan(fromRequest(request), currentUser.getId());
             return ResponseEntity.ok(toDTO(saved));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -49,7 +49,7 @@ public class InstallmentPlanController {
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@AuthenticationPrincipal User currentUser,
                                     @PathVariable Long id,
-                                    @RequestBody InstallmentPlanRequestDTO request) {
+                                    @Valid @RequestBody InstallmentPlanRequestDTO request) {
         try {
             return ResponseEntity.ok(toDTO(installmentPlanService.updatePlan(id, fromRequest(request), currentUser)));
         } catch (Exception e) {

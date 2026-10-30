@@ -38,6 +38,10 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
+    public double balanceOf(Long accountId) {
+        return Math.round(transactionRepository.sumByAccountId(accountId) * 100.0) / 100.0;
+    }
+
     public List<Account> getUserAccounts(Long userId) {
         return accountRepository.findByOwnersId(userId);
     }
@@ -64,9 +68,7 @@ public class AccountService {
     private Account get(Long id, User actor) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-        boolean owner = account.getOwners() != null
-                && account.getOwners().stream().anyMatch(u -> u.getId().equals(actor.getId()));
-        if (!owner) {
+        if (!account.isOwnedBy(actor.getId())) {
             throw new RuntimeException("Você não é dono desta conta");
         }
         return account;

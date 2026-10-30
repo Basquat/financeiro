@@ -10,7 +10,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,13 +27,9 @@ public class TransactionService {
     public Transaction createTransaction(Transaction transaction, Long userId, Long accountId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
         transaction.setUser(user);
-        transaction.setAccount(account);
-        Transaction saved = transactionRepository.save(transaction);
-        applyToBalance(account, transaction.getAmount());
-        return saved;
+        transaction.setAccount(ownedAccount(accountId, userId));
+        return transactionRepository.save(transaction);
     }
 
     @Transactional
@@ -42,9 +37,6 @@ public class TransactionService {
         Transaction tx = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lançamento não encontrado"));
         assertCanTouch(tx, actor);
-
-        Account oldAccount = tx.getAccount();
-        applyToBalance(oldAccount, -tx.getAmount());
 
         tx.setTitle(changes.getTitle());
         tx.setAmount(changes.getAmount());
@@ -54,14 +46,9 @@ public class TransactionService {
         tx.setInstallmentCurrent(changes.getInstallmentCurrent());
         tx.setInstallmentTotal(changes.getInstallmentTotal());
 
-        Account newAccount = oldAccount;
-        if (accountId != null && !accountId.equals(oldAccount.getId())) {
-            newAccount = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
-            tx.setAccount(newAccount);
+        if (accountId != null && !accountId.equals(tx.getAccount().getId())) {
+            tx.setAccount(ownedAccount(accountId, actor.getId()));
         }
-        applyToBalance(newAccount, tx.getAmount());
-
         return transactionRepository.save(tx);
     }
 
@@ -70,7 +57,6 @@ public class TransactionService {
         Transaction tx = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lançamento não encontrado"));
         assertCanTouch(tx, actor);
-        applyToBalance(tx.getAccount(), -tx.getAmount());
         transactionRepository.delete(tx);
     }
 
@@ -82,10 +68,6 @@ public class TransactionService {
         return transactionRepository.findByAccountIdOrderByTransactionDateDesc(accountId);
     }
 
-    public List<Transaction> getTransactionsByDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate) {
-        return transactionRepository.findByTransactionDateBetweenOrderByTransactionDateDesc(startDate, endDate);
-    }
-
     /** Net balance across the user's transactions. Amounts are already signed (expenses negative). */
     public Double getUserBalance(Long userId) {
         return getUserTransactions(userId).stream()
@@ -93,17 +75,18 @@ public class TransactionService {
                 .sum();
     }
 
-    private void applyToBalance(Account account, double delta) {
-        if (account == null) return;
-        double base = account.getCurrentBalance() == null ? 0.0 : account.getCurrentBalance();
-        account.setCurrentBalance(Math.round((base + delta) * 100.0) / 100.0);
-        accountRepository.save(account);
+    private Account ownedAccount(Long accountId, Long userId) {
+        Account account = accountRepository.findById(accountId == null ? -1L : accountId)
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+        if (!account.isOwnedBy(userId)) {
+            throw new RuntimeException("Conta não encontrada");
+        }
+        return account;
     }
 
     private void assertCanTouch(Transaction tx, User actor) {
         boolean owner = tx.getUser() != null && tx.getUser().getId().equals(actor.getId());
-        boolean coOwner = tx.getAccount() != null && tx.getAccount().getOwners() != null
-                && tx.getAccount().getOwners().stream().anyMatch(u -> u.getId().equals(actor.getId()));
+        boolean coOwner = tx.getAccount() != null && tx.getAccount().isOwnedBy(actor.getId());
         if (!owner && !coOwner) {
             throw new RuntimeException("Você não pode alterar este lançamento");
         }

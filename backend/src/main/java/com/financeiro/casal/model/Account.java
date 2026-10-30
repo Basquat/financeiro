@@ -39,6 +39,7 @@ public class Account {
     @JoinColumn(name = "creator_id")
     private User creator;
 
-    @Column(name = "current_balance")
-    private Double currentBalance;
+    public boolean isOwnedBy(Long userId) {
+        return owners != null && owners.stream().anyMatch(u -> u.getId().equals(userId));
+    }
 }

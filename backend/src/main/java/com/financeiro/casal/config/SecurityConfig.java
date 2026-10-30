@@ -16,6 +16,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,6 +31,10 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    private static final String CSP = "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; "
+            + "frame-ancestors 'self'; form-action 'self'; img-src 'self' data: https:; connect-src 'self'; "
+            + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com";
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AppUserDetailsService userDetailsService;
@@ -49,7 +57,6 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/login").permitAll()
-                .requestMatchers("/api/auth/profile").permitAll()
                 .requestMatchers("/api/auth/pin/login").permitAll()
                 .requestMatchers("/api/auth/pin/set").authenticated()
                 .requestMatchers("/api/auth/pin").authenticated()
@@ -60,7 +67,12 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())) // H2 console
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin()) // H2 console
+                // CSP on the SPA/API; the local-only H2 console needs inline scripts, so it is skipped.
+                .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                        new NegatedRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher("/h2-console/**")),
+                        new StaticHeadersWriter("Content-Security-Policy", CSP))))
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

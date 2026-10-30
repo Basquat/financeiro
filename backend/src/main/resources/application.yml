@@ -31,20 +31,12 @@ server:
 # JWT Configuration
 app:
   jwt:
-    secret: ${JWT_SECRET:your-super-secret-key-change-in-production-please}
-    expiration: ${JWT_EXPIRATION_MS:86400000} # 24 hours
-    refresh-token:
-      expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 days
+    secret: ${JWT_SECRET} # obrigatório (>= 32 bytes); sem default para produção não subir com chave conhecida
+    expiration: ${JWT_EXPIRATION_MS:43200000} # 12 horas
   mail:
     from: ${MAIL_FROM:${SMTP_USER:no-reply@financeiro-casal.local}}
   email-verification:
     expiration-minutes: ${EMAIL_VERIFICATION_EXP_MIN:15}
-
-# Supabase Configuration
-supabase:
-  url: ${SUPABASE_URL:}
-  anon-key: ${SUPABASE_ANON_KEY:}
-  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
 
 # Actuator (kept under /api to match the frontend and deploy config)
 management:

@@ -13,6 +13,10 @@ spring:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
 
+app:
+  jwt:
+    secret: test-only-secret-at-least-32-bytes-long!!
+
 management:
   health:
     mail:

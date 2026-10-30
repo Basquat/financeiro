@@ -1,5 +1,6 @@
 package com.financeiro.casal.dto;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +23,7 @@ public class TransactionRequestDTO {
     private String title;
 
     @NotNull(message = "Valor é obrigatório")
+    @Digits(integer = 12, fraction = 2, message = "Valor inválido (máx. 2 casas decimais)")
     private Double amount; // negative for expenses, positive for income
 
     @NotNull(message = "Data da transação é obrigatória")
@@ -33,9 +35,6 @@ public class TransactionRequestDTO {
     @NotBlank(message = "Categoria é obrigatória")
     @Size(max = 100, message = "Categoria deve ter no máximo 100 caracteres")
     private String category;
-
-    @NotNull(message = "Usuário é obrigatório")
-    private Long userId;
 
     @NotNull(message = "Conta é obrigatória")
     private Long accountId;

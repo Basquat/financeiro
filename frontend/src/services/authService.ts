@@ -20,7 +20,8 @@ export const authService = {
   },
 
   async pinLogin(pin: string): Promise<AuthResult> {
-    const { data } = await api.post<AuthResult>('/auth/pin/login', { pin });
+    const email = localStorage.getItem('financeiro.pin_email') ?? '';
+    const { data } = await api.post<AuthResult>('/auth/pin/login', { email, pin });
     tokenStore.set(data.token);
     return data;
   },

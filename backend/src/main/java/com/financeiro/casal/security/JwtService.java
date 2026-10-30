@@ -20,13 +20,11 @@ public class JwtService {
 
     public JwtService(
             @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration:86400000}") long expirationMs) {
-        // Pad short secrets so HMAC-SHA256 always has enough key material.
+            @Value("${app.jwt.expiration:43200000}") long expirationMs) {
+        // An empty/short secret would make tokens forgeable: refuse to start instead.
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) {
-            byte[] padded = new byte[32];
-            System.arraycopy(bytes, 0, padded, 0, bytes.length);
-            bytes = padded;
+            throw new IllegalStateException("JWT_SECRET deve ter pelo menos 32 bytes");
         }
         this.key = Keys.hmacShaKeyFor(bytes);
         this.expirationMs = expirationMs;

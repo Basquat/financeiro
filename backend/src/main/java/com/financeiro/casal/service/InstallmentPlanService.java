@@ -88,7 +88,7 @@ public class InstallmentPlanService {
     private InstallmentPlan get(Long id, User actor) {
         InstallmentPlan plan = installmentPlanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Parcelamento não encontrado"));
-        if (plan.getUser() != null && !plan.getUser().getId().equals(actor.getId())) {
+        if (plan.getUser() == null || !plan.getUser().getId().equals(actor.getId())) {
             throw new RuntimeException("Este parcelamento é de outra pessoa");
         }
         return plan;

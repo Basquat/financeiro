@@ -60,7 +60,7 @@ public class SharedGoalService {
     private SharedGoal getOrThrow(Long goalId, User actor) {
         SharedGoal goal = sharedGoalRepository.findById(goalId)
                 .orElseThrow(() -> new RuntimeException("Meta não encontrada"));
-        boolean mine = goal.getOwner() == null || goal.getOwner().getId().equals(actor.getId());
+        boolean mine = goal.getOwner() != null && goal.getOwner().getId().equals(actor.getId());
         boolean shared = goal.getPartnership() != null && goal.getPartnership().includes(actor.getId());
         if (!mine && !shared) {
             throw new RuntimeException("Esta meta não é sua");

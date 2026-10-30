@@ -7,12 +7,12 @@ import com.financeiro.casal.dto.UserSummaryDTO;
 import com.financeiro.casal.model.Transaction;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -25,11 +25,10 @@ public class TransactionController {
 
     @PostMapping
     public ResponseEntity<?> createTransaction(@AuthenticationPrincipal User currentUser,
-                                               @RequestBody TransactionRequestDTO request) {
+                                               @Valid @RequestBody TransactionRequestDTO request) {
         try {
-            Long userId = request.getUserId() != null ? request.getUserId() : currentUser.getId();
             Transaction saved = transactionService.createTransaction(
-                    fromRequest(request), userId, request.getAccountId());
+                    fromRequest(request), currentUser.getId(), request.getAccountId());
             return ResponseEntity.ok(toDTO(saved));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -39,7 +38,7 @@ public class TransactionController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTransaction(@AuthenticationPrincipal User currentUser,
                                                @PathVariable Long id,
-                                               @RequestBody TransactionRequestDTO request) {
+                                               @Valid @RequestBody TransactionRequestDTO request) {
         try {
             Transaction updated = transactionService.updateTransaction(
                     id, fromRequest(request), request.getAccountId(), currentUser);
@@ -81,34 +80,18 @@ public class TransactionController {
         }
     }
 
-    @GetMapping("/user/{userId}/monthly")
-    public ResponseEntity<?> getMonthlyTransactions(@AuthenticationPrincipal User currentUser,
-                                                    @PathVariable Long userId,
-                                                    @RequestParam int year,
-                                                    @RequestParam int month) {
-        if (!currentUser.getId().equals(userId)) return forbidden();
-        try {
-            LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0, 0);
-            LocalDateTime end = start.plusMonths(1).minusSeconds(1);
-            return ResponseEntity.ok(
-                    transactionService.getTransactionsByDateRange(userId, start, end).stream().map(this::toDTO).toList());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
     private ResponseEntity<?> forbidden() {
         return ResponseEntity.status(403).body(Map.of("error", "Acesso negado"));
     }
 
     private Transaction fromRequest(TransactionRequestDTO request) {
+        boolean income = request.getType() == TransactionRequestDTO.TransactionType.INCOME;
         Transaction tx = Transaction.builder()
                 .title(request.getTitle())
-                .amount(request.getAmount())
+                // the sign follows the type, never the client: expenses negative, income positive
+                .amount(income ? Math.abs(request.getAmount()) : -Math.abs(request.getAmount()))
                 .transactionDate(request.getTransactionDate())
-                .type(request.getType() == TransactionRequestDTO.TransactionType.INCOME
-                        ? Transaction.TransactionType.INCOME
-                        : Transaction.TransactionType.EXPENSE)
+                .type(income ? Transaction.TransactionType.INCOME : Transaction.TransactionType.EXPENSE)
                 .category(request.getCategory())
                 .build();
         tx.setInstallmentCurrent(request.getInstallmentCurrent());

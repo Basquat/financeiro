@@ -1,5 +1,6 @@
 package com.financeiro.casal.dto;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
@@ -24,6 +25,7 @@ public class SharedGoalRequestDTO {
 
     @NotNull(message = "Valor objetivo é obrigatório")
     @Positive(message = "Valor objetivo deve ser positivo")
+    @Digits(integer = 12, fraction = 2, message = "Valor inválido (máx. 2 casas decimais)")
     private Double targetAmount;
 
     @NotNull(message = "Data limite é obrigatória")

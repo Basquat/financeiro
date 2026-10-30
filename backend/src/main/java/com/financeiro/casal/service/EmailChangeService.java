@@ -26,6 +26,7 @@ public class EmailChangeService {
     private final EmailVerificationTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
+    private final AuthService authService;
 
     @Value("${app.mail.from:no-reply@financeiro-casal.local}")
     private String mailFrom;
@@ -70,9 +71,19 @@ public class EmailChangeService {
      */
     @Transactional
     public User confirmChange(User user, String code) {
+        String key = "email-code:" + user.getId();
         EmailVerificationToken token = tokenRepository
                 .findFirstByUserIdAndCodeAndUsedFalseOrderByCreatedAtDesc(user.getId(), code)
-                .orElseThrow(() -> new RuntimeException("Código inválido"));
+                .orElse(null);
+        if (token == null) {
+            if (authService.recordFailure(key)) { // 6-digit code: no brute force
+                tokenRepository.deleteByUserId(user.getId());
+                authService.clearFailures(key);
+                throw new RuntimeException("Muitas tentativas. Solicite um novo código.");
+            }
+            throw new RuntimeException("Código inválido");
+        }
+        authService.clearFailures(key);
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Código expirado. Solicite um novo.");

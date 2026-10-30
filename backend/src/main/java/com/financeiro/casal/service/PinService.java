@@ -32,14 +32,29 @@ public class PinService {
         userRepository.save(user);
     }
 
-    public Optional<User> loginWithPin(String pin) {
-        if (pin == null || pin.length() < MIN_PIN_LENGTH || pin.length() > MAX_PIN_LENGTH) {
+    /**
+     * A PIN only unlocks the account it belongs to (identified by e-mail). After 5 wrong PINs
+     * the PIN is wiped, so a 4-6 digit space can't be brute-forced; the password still works.
+     */
+    public Optional<User> loginWithPin(String email, String pin) {
+        Optional<User> found = userRepository.findByEmail(email == null ? "" : email.trim())
+                .filter(u -> Boolean.TRUE.equals(u.getPinEnabled()) && u.getPinHash() != null);
+        if (found.isEmpty() || pin == null || pin.length() < MIN_PIN_LENGTH || pin.length() > MAX_PIN_LENGTH) {
             return Optional.empty();
         }
-        return userRepository.findAll().stream()
-                .filter(u -> Boolean.TRUE.equals(u.getPinEnabled()) && u.getPinHash() != null)
-                .filter(u -> passwordEncoder.matches(pin, u.getPinHash()))
-                .findFirst();
+        User user = found.get();
+        String key = "pin:" + user.getId();
+        if (passwordEncoder.matches(pin, user.getPinHash())) {
+            authService.clearFailures(key);
+            return found;
+        }
+        if (authService.recordFailure(key)) {
+            user.setPinHash(null);
+            user.setPinEnabled(false);
+            userRepository.save(user);
+            authService.clearFailures(key);
+        }
+        return Optional.empty();
     }
 
     public void disablePin(Long userId, String currentPassword) {

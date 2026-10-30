@@ -5,6 +5,7 @@ import com.financeiro.casal.dto.SharedGoalRequestDTO;
 import com.financeiro.casal.model.SharedGoal;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.SharedGoalService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +21,7 @@ public class SharedGoalController {
     private final SharedGoalService sharedGoalService;
 
     @PostMapping
-    public ResponseEntity<?> create(@AuthenticationPrincipal User user, @RequestBody SharedGoalRequestDTO request) {
+    public ResponseEntity<?> create(@AuthenticationPrincipal User user, @Valid @RequestBody SharedGoalRequestDTO request) {
         try {
             return ResponseEntity.ok(toDTO(sharedGoalService.createSharedGoal(fromRequest(request), user)));
         } catch (Exception e) {
@@ -40,7 +41,7 @@ public class SharedGoalController {
     @PutMapping("/{goalId}")
     public ResponseEntity<?> update(@AuthenticationPrincipal User user,
                                     @PathVariable Long goalId,
-                                    @RequestBody SharedGoalRequestDTO request) {
+                                    @Valid @RequestBody SharedGoalRequestDTO request) {
         try {
             return ResponseEntity.ok(toDTO(sharedGoalService.updateGoal(goalId, fromRequest(request), user)));
         } catch (Exception e) {
