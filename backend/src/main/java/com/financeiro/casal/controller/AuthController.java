@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.dto.PinLoginRequest;
 import com.financeiro.casal.dto.PinRequest;
 import com.financeiro.casal.dto.UserDTO;
@@ -40,7 +41,7 @@ public class AuthController {
                     "token", jwtService.generateToken(user)
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -72,7 +73,7 @@ public class AuthController {
                     "message", "PIN configured successfully"
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -99,7 +100,7 @@ public class AuthController {
                     "message", "PIN disabled"
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

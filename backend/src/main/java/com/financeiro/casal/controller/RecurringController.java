@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.model.RecurringTransaction;
 import com.financeiro.casal.model.Transaction;
 import com.financeiro.casal.model.User;
@@ -48,7 +49,7 @@ public class RecurringController {
         try {
             return ResponseEntity.ok(RecurringDTO.from(recurringService.create(fromRequest(req), req.accountId(), user)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -58,7 +59,7 @@ public class RecurringController {
         try {
             return ResponseEntity.ok(RecurringDTO.from(recurringService.update(id, fromRequest(req), req.accountId(), user)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -68,7 +69,7 @@ public class RecurringController {
             recurringService.delete(id, user);
             return ResponseEntity.ok(Map.of("message", "Recorrência excluída"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -79,7 +80,7 @@ public class RecurringController {
             Transaction tx = recurringService.post(id, user);
             return ResponseEntity.ok(Map.of("message", "Lançado", "transactionId", tx.getId()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

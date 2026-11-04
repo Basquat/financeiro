@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.TelegramService;
@@ -36,7 +37,7 @@ public class TelegramController {
         try {
             return ResponseEntity.ok(telegram.createLinkCode(user));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.dto.AccountSummaryDTO;
 import com.financeiro.casal.dto.TransactionDTO;
 import com.financeiro.casal.dto.TransactionRequestDTO;
@@ -35,7 +36,7 @@ public class TransactionController {
                     fromRequest(request), currentUser.getId(), request.getAccountId());
             return ResponseEntity.ok(toDTO(saved));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -48,7 +49,7 @@ public class TransactionController {
                     id, fromRequest(request), request.getAccountId(), currentUser);
             return ResponseEntity.ok(toDTO(updated));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -59,7 +60,7 @@ public class TransactionController {
             transactionService.deleteTransaction(id, currentUser);
             return ResponseEntity.ok(Map.of("message", "Lançamento excluído"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -76,7 +77,7 @@ public class TransactionController {
             return ResponseEntity.ok(transactionService.transfer(request.fromAccountId(), request.toAccountId(),
                     request.amount(), request.date(), currentUser).stream().map(this::toDTO).toList());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -87,7 +88,7 @@ public class TransactionController {
         try {
             return ResponseEntity.ok(transactionService.getUserTransactions(userId).stream().map(this::toDTO).toList());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -97,7 +98,7 @@ public class TransactionController {
         try {
             return ResponseEntity.ok(Map.of("balance", transactionService.getUserBalance(userId)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

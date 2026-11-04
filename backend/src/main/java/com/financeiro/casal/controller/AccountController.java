@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.dto.AccountDTO;
 import com.financeiro.casal.dto.AccountRequestDTO;
 import com.financeiro.casal.dto.UserSummaryDTO;
@@ -29,7 +30,7 @@ public class AccountController {
                     .map(this::toDTO).toList();
             return ResponseEntity.ok(dtos);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -46,7 +47,7 @@ public class AccountController {
                     .build();
             return ResponseEntity.ok(toDTO(accountService.createAccount(account, currentUser.getId())));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -58,7 +59,7 @@ public class AccountController {
             Account updated = accountService.updateAccount(id, request, currentUser);
             return ResponseEntity.ok(toDTO(updated));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -68,7 +69,7 @@ public class AccountController {
             accountService.deleteAccount(id, currentUser);
             return ResponseEntity.ok(Map.of("message", "Conta excluída"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

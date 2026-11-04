@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.dto.BudgetSettingsDTO;
 import com.financeiro.casal.dto.EmailChangeConfirmDTO;
 import com.financeiro.casal.dto.EmailChangeRequestDTO;
@@ -39,7 +40,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(UserDTO.from(userService.updateSalary(user.getId(), request.getSalary())));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -49,7 +50,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(UserDTO.from(userService.updateAvatar(user.getId(), body.get("avatarUrl"))));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -59,7 +60,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(UserDTO.from(userService.updateBudget(user.getId(), request)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -69,7 +70,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(UserDTO.from(userService.updateCategoryBudgets(user.getId(), limits)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -88,7 +89,7 @@ public class UserController {
             privacyService.deleteAccount(user, body.get("password"));
             return ResponseEntity.ok(Map.of("message", "Conta excluída"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -100,7 +101,7 @@ public class UserController {
             return ResponseEntity.ok(Map.of(
                     "message", "Enviamos um código de verificação para " + request.getNewEmail()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -114,7 +115,7 @@ public class UserController {
                     "token", jwtService.generateToken(updated),
                     "message", "E-mail alterado com sucesso"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 }

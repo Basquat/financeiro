@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.dto.PartnerStatusDTO;
 import com.financeiro.casal.dto.UserSummaryDTO;
 import com.financeiro.casal.model.PartnerInvite;
@@ -34,7 +35,7 @@ public class PartnerController {
             PartnerInvite inv = partnerService.createInvite(user);
             return ResponseEntity.ok(Map.of("code", inv.getCode(), "expiresAt", inv.getExpiresAt()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -52,7 +53,7 @@ public class PartnerController {
                     "partner", summary(inviter),
                     "message", "Vocês agora compartilham contas conjuntas e metas."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -62,7 +63,7 @@ public class PartnerController {
             partnerService.dissolve(user.getId());
             return ResponseEntity.ok(Map.of("message", "Parceria desfeita"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

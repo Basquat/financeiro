@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.AssistantService;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 @RestController
@@ -66,7 +66,7 @@ public class AssistantController {
         } catch (AssistantService.AssistantException e) {
             return ResponseEntity.status(502).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", Objects.requireNonNullElse(e.getMessage(), "Algo deu errado")));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 }

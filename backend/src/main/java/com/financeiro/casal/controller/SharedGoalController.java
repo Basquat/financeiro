@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.dto.SharedGoalDTO;
 import com.financeiro.casal.dto.SharedGoalRequestDTO;
 import com.financeiro.casal.model.SharedGoal;
@@ -25,7 +26,7 @@ public class SharedGoalController {
         try {
             return ResponseEntity.ok(toDTO(sharedGoalService.createSharedGoal(fromRequest(request), user)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -34,7 +35,7 @@ public class SharedGoalController {
         try {
             return ResponseEntity.ok(sharedGoalService.getVisibleGoals(user).stream().map(this::toDTO).toList());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -45,7 +46,7 @@ public class SharedGoalController {
         try {
             return ResponseEntity.ok(toDTO(sharedGoalService.updateGoal(goalId, fromRequest(request), user)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -55,7 +56,7 @@ public class SharedGoalController {
             sharedGoalService.deleteGoal(goalId, user);
             return ResponseEntity.ok(Map.of("message", "Meta excluída"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -66,7 +67,7 @@ public class SharedGoalController {
         try {
             return ResponseEntity.ok(toDTO(sharedGoalService.contributeToGoal(goalId, amount, user)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

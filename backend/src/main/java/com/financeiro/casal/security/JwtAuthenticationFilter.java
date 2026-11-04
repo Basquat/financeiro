@@ -6,7 +6,10 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.jsonwebtoken.JwtException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Optional;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -47,10 +51,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             user, null, user.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    MDC.put("uid", String.valueOf(user.getId()));
                 }
             }
-        } catch (Exception ignored) {
-            // invalid token -> stays unauthenticated
+        } catch (JwtException | IllegalArgumentException e) {
+            log.debug("token inválido: {}", e.getMessage()); // stays unauthenticated → 403
+        } catch (Exception e) {
+            // DB/infra failure while loading the user: answer 503 instead of a misleading 403
+            log.error("falha ao autenticar token", e);
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            return;
         }
 
         filterChain.doFilter(request, response);

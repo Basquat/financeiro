@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.dto.InstallmentPlanDTO;
 import com.financeiro.casal.dto.InstallmentPlanRequestDTO;
 import com.financeiro.casal.dto.UserSummaryDTO;
@@ -28,7 +29,7 @@ public class InstallmentPlanController {
             InstallmentPlan saved = installmentPlanService.createInstallmentPlan(fromRequest(request), currentUser.getId());
             return ResponseEntity.ok(toDTO(saved));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -42,7 +43,7 @@ public class InstallmentPlanController {
             return ResponseEntity.ok(
                     installmentPlanService.getUserInstallmentPlans(userId).stream().map(this::toDTO).toList());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -53,7 +54,7 @@ public class InstallmentPlanController {
         try {
             return ResponseEntity.ok(toDTO(installmentPlanService.updatePlan(id, fromRequest(request), currentUser)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -63,7 +64,7 @@ public class InstallmentPlanController {
             installmentPlanService.deletePlan(id, currentUser);
             return ResponseEntity.ok(Map.of("message", "Parcelamento excluído"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -74,7 +75,7 @@ public class InstallmentPlanController {
         try {
             return ResponseEntity.ok(toDTO(installmentPlanService.payInstallment(id, accountId, currentUser)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 

@@ -26,7 +26,8 @@ public class Account {
     @Column(nullable = false)
     private Boolean isJoint;
 
-    @ManyToMany
+    // EAGER: 1–2 owners per account, always shown in the DTO; open-in-view is off, so lazy would fail.
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "account_owners",
         joinColumns = @JoinColumn(name = "account_id"),

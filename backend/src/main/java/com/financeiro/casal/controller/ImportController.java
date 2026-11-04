@@ -1,5 +1,6 @@
 package com.financeiro.casal.controller;
 
+import com.financeiro.casal.config.ApiErrorHandler;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.ImportService;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class ImportController {
         try {
             return ResponseEntity.ok(Map.of("rows", importService.previewOfx(req.data(), req.accountId(), user)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", String.valueOf(e.getMessage())));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 
@@ -36,7 +37,7 @@ public class ImportController {
         try {
             return ResponseEntity.ok(Map.of("imported", importService.commit(req.accountId(), req.rows(), user)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", String.valueOf(e.getMessage())));
+            return ApiErrorHandler.badRequest(e);
         }
     }
 }
