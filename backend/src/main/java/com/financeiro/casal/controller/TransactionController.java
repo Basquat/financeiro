@@ -8,11 +8,15 @@ import com.financeiro.casal.model.Transaction;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.service.TransactionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +58,23 @@ public class TransactionController {
         try {
             transactionService.deleteTransaction(id, currentUser);
             return ResponseEntity.ok(Map.of("message", "Lançamento excluído"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    public record TransferRequest(
+            @NotNull(message = "Conta de origem é obrigatória") Long fromAccountId,
+            @NotNull(message = "Conta de destino é obrigatória") Long toAccountId,
+            @NotNull(message = "Valor é obrigatório") @Positive(message = "Valor deve ser positivo")
+            @Digits(integer = 12, fraction = 2, message = "Valor inválido (máx. 2 casas decimais)") Double amount,
+            LocalDateTime date) {}
+
+    @PostMapping("/transfer")
+    public ResponseEntity<?> transfer(@AuthenticationPrincipal User currentUser, @Valid @RequestBody TransferRequest request) {
+        try {
+            return ResponseEntity.ok(transactionService.transfer(request.fromAccountId(), request.toAccountId(),
+                    request.amount(), request.date(), currentUser).stream().map(this::toDTO).toList());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

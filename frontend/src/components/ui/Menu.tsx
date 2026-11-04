@@ -29,7 +29,7 @@ export function CardMenu({ actions, label = 'Ações' }: { actions: MenuAction[]
         leaveFrom="opacity-100 scale-100"
         leaveTo="opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-20 mt-1 w-44 origin-top-right overflow-hidden rounded-md border border-line bg-surface-2 p-1 shadow-pop focus:outline-none">
+        <Menu.Items className="absolute right-0 z-20 mt-1 w-44 origin-top-right overflow-hidden rounded-md border border-line bg-surface p-1.5 shadow-pop focus:outline-none">
           {actions.map((action) => (
             <Menu.Item key={action.label}>
               {({ active }) => (
@@ -37,7 +37,7 @@ export function CardMenu({ actions, label = 'Ações' }: { actions: MenuAction[]
                   onClick={action.onClick}
                   className={cx(
                     'flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-[13px] transition',
-                    active && 'bg-surface-3',
+                    active && 'bg-surface-2',
                     action.danger ? 'text-expense' : 'text-text-dim',
                   )}
                 >

@@ -39,6 +39,16 @@ app:
     from: ${MAIL_FROM:${SMTP_USER:no-reply@financeiro-casal.local}}
   email-verification:
     expiration-minutes: ${EMAIL_VERIFICATION_EXP_MIN:15}
+  ai:
+    # cifra as chaves de API dos usuários (assistente). Sem AI_KEY_SECRET, deriva do JWT_SECRET —
+    # nesse caso, trocar o JWT_SECRET obriga cada usuário a colar a chave de novo.
+    secret: ${AI_KEY_SECRET:${app.jwt.secret}}
+  # Assistente no Telegram (opcional): crie o bot no @BotFather. Com APP_PUBLIC_URL, o webhook é registrado no boot.
+  telegram:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    secret: ${TELEGRAM_WEBHOOK_SECRET:}
+    bot-username: ${TELEGRAM_BOT_USERNAME:}
+  public-url: ${APP_PUBLIC_URL:}
 
 # Actuator (kept under /api to match the frontend and deploy config)
 management:

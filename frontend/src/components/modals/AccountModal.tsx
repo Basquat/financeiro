@@ -16,7 +16,10 @@ export function AccountModal() {
   const partnerName = usePartner().data?.partner?.name ?? null;
 
   const [name, setName] = useState('');
-  const [isJoint, setIsJoint] = useState(true);
+  const [isJoint, setIsJoint] = useState(false);
+  const [creditCard, setCreditCard] = useState(false);
+  const [closingDay, setClosingDay] = useState('');
+  const [dueDay, setDueDay] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -27,9 +30,15 @@ export function AccountModal() {
     if (editing) {
       setName(editing.name);
       setIsJoint(editing.isJoint);
+      setCreditCard(!!editing.creditCard);
+      setClosingDay(editing.closingDay ? String(editing.closingDay) : '');
+      setDueDay(editing.dueDay ? String(editing.dueDay) : '');
     } else {
       setName('');
-      setIsJoint(true);
+      setIsJoint(false);
+      setCreditCard(false);
+      setClosingDay('');
+      setDueDay('');
     }
   }, [open, editing]);
 
@@ -41,7 +50,14 @@ export function AccountModal() {
       setError('Dê um nome para a conta.');
       return;
     }
-    const input = { name: name.trim(), isJoint };
+    const day = (v: string) => (v ? Math.min(31, Math.max(1, Number(v) || 1)) : null);
+    const input = {
+      name: name.trim(),
+      isJoint,
+      creditCard,
+      closingDay: creditCard ? day(closingDay) : null,
+      dueDay: creditCard ? day(dueDay) : null,
+    };
     try {
       if (editing) await update.mutateAsync({ id: editing.id, input });
       else await create.mutateAsync(input);
@@ -108,7 +124,7 @@ export function AccountModal() {
               id={id}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Conta conjunta, Nubank, Carteira…"
+              placeholder="Nubank, Carteira, Cartão Inter…"
               className="field-input"
               autoFocus={!editing}
             />
@@ -118,8 +134,8 @@ export function AccountModal() {
           {() => (
             <div className="grid grid-cols-2 gap-2">
               {[
-                { joint: true, label: 'Conjunta', hint: 'Compartilhada' },
                 { joint: false, label: 'Pessoal', hint: 'Só sua' },
+                { joint: true, label: 'Conjunta', hint: 'Dividida com alguém' },
               ].map((opt) => (
                 <button
                   key={opt.label}
@@ -128,7 +144,7 @@ export function AccountModal() {
                   className={cx(
                     'rounded-md border px-3 py-2.5 text-left transition focus-ring',
                     isJoint === opt.joint
-                      ? 'border-gold bg-gold/10'
+                      ? 'border-brand bg-brand/10'
                       : 'border-line bg-surface-2 hover:bg-surface-3',
                   )}
                   aria-pressed={isJoint === opt.joint}
@@ -140,10 +156,37 @@ export function AccountModal() {
             </div>
           )}
         </Field>
-        {isJoint && partnerName && !editing && (
+        {isJoint && !editing && (
           <p className="rounded-md bg-surface-2 px-3 py-2 text-[12px] text-text-mute">
-            Esta conta será compartilhada.
+            {partnerName
+              ? `Esta conta será compartilhada com ${partnerName}.`
+              : 'Para compartilhar, conecte a outra pessoa em Perfil → Conta conjunta.'}
           </p>
+        )}
+        <label className="flex items-center gap-2.5 text-[14px] text-text">
+          <input
+            type="checkbox"
+            checked={creditCard}
+            onChange={(e) => setCreditCard(e.target.checked)}
+            className="h-4 w-4 accent-[rgb(var(--brand))]"
+          />
+          É um cartão de crédito
+        </label>
+        {creditCard && (
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Fecha dia">
+              {({ id }) => (
+                <input id={id} type="number" min={1} max={31} inputMode="numeric" className="field-input"
+                  value={closingDay} onChange={(e) => setClosingDay(e.target.value)} placeholder="3" />
+              )}
+            </Field>
+            <Field label="Vence dia">
+              {({ id }) => (
+                <input id={id} type="number" min={1} max={31} inputMode="numeric" className="field-input"
+                  value={dueDay} onChange={(e) => setDueDay(e.target.value)} placeholder="10" />
+              )}
+            </Field>
+          </div>
         )}
         {error && <p className="text-[13px] text-expense">{error}</p>}
       </div>

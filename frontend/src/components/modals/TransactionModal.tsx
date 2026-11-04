@@ -7,19 +7,7 @@ import { Field, MoneyInput, parseAmount } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import { Button, Pill } from '@/components/ui/primitives';
 
-const CATEGORIES = [
-  'Mercado',
-  'Alimentação',
-  'Transporte',
-  'Moradia',
-  'Utilidades',
-  'Saúde',
-  'Lazer',
-  'Streaming',
-  'Educação',
-  'Salário',
-  'Outros',
-];
+import { CATEGORIES } from '@/lib/categories';
 
 export function TransactionModal() {
   const open = useUi((s) => s.modal === 'transaction');
@@ -225,7 +213,7 @@ export function TransactionModal() {
             type="checkbox"
             checked={isInstallment}
             onChange={(e) => setIsInstallment(e.target.checked)}
-            className="h-4 w-4 rounded border-line bg-surface-2 accent-gold"
+            className="h-4 w-4 rounded border-line bg-surface-2 accent-brand"
           />
           É uma parcela
         </label>

@@ -1,4 +1,10 @@
-import { ChevronRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import {
+  ChevronRightIcon,
+  ComputerDesktopIcon,
+  MoonIcon,
+  PencilSquareIcon,
+  SunIcon,
+} from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { money } from '@/lib/format';
@@ -8,8 +14,10 @@ import { useAuth, useAuthActions, useAuthStore } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/useData';
 import { useUi } from '@/hooks/useUi';
 import { AppShell } from '@/components/layout/AppShell';
+import { PrivacyCard } from '@/components/PrivacyCard';
 import { PersonDot } from '@/components/ui/Person';
-import { Button, Card } from '@/components/ui/primitives';
+import { Button, Card, cx } from '@/components/ui/primitives';
+import { getThemePref, setThemePref, type ThemePref } from '@/lib/theme';
 import { Field } from '@/components/ui/Field';
 
 function Row({
@@ -32,6 +40,44 @@ function Row({
         <ChevronRightIcon className="h-4 w-4 text-text-mute" />
       </span>
     </button>
+  );
+}
+
+const THEMES: Array<{ value: ThemePref; label: string; Icon: typeof SunIcon }> = [
+  { value: 'light', label: 'Claro', Icon: SunIcon },
+  { value: 'dark', label: 'Escuro', Icon: MoonIcon },
+  { value: 'system', label: 'Automático', Icon: ComputerDesktopIcon },
+];
+
+function Appearance() {
+  const [pref, setPref] = useState(getThemePref);
+  return (
+    <Card className="p-4">
+      <p className="text-[14px] font-medium text-text">Aparência</p>
+      <p className="mt-0.5 text-[12px] text-text-mute">Automático segue o tema do seu aparelho.</p>
+      <div role="radiogroup" aria-label="Tema" className="mt-3 grid grid-cols-3 gap-2">
+        {THEMES.map(({ value, label, Icon }) => (
+          <button
+            key={value}
+            role="radio"
+            aria-checked={pref === value}
+            onClick={() => {
+              setPref(value);
+              setThemePref(value);
+            }}
+            className={cx(
+              'flex flex-col items-center gap-1.5 rounded-md border py-3 text-[13px] font-medium transition focus-ring',
+              pref === value
+                ? 'border-brand bg-brand-soft text-text'
+                : 'border-line text-text-dim hover:bg-surface-2 hover:text-text',
+            )}
+          >
+            <Icon className="h-5 w-5" />
+            {label}
+          </button>
+        ))}
+      </div>
+    </Card>
   );
 }
 
@@ -143,6 +189,8 @@ export default function Profile() {
           />
         </Card>
 
+        <Appearance />
+
         {pinMode !== 'idle' && (
           <Card className="space-y-3 p-4">
             <p className="text-[14px] font-medium text-text">
@@ -224,6 +272,8 @@ export default function Profile() {
             </div>
           </Card>
         )}
+
+        <PrivacyCard />
 
         <Button variant="danger" onClick={logout} block>
           Sair da conta

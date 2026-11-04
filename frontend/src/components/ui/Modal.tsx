@@ -29,7 +29,7 @@ export function Modal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-ink/70 backdrop-blur-sm" aria-hidden />
+          <div className="fixed inset-0 bg-brand-deep/40 backdrop-blur-[2px]" aria-hidden />
         </Transition.Child>
 
         <div className="fixed inset-0 flex items-end justify-center sm:items-center sm:p-4">
@@ -42,10 +42,10 @@ export function Modal({
             leaveFrom="translate-y-0 sm:opacity-100"
             leaveTo="translate-y-full sm:translate-y-2 sm:opacity-0"
           >
-            <Dialog.Panel className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-surface shadow-pop sm:max-w-md sm:rounded-2xl">
+            <Dialog.Panel className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-xl border border-line bg-surface shadow-pop sm:max-w-md sm:rounded-xl">
               <div className="flex items-start justify-between gap-4 border-b border-line-soft px-5 py-4">
                 <div>
-                  <Dialog.Title className="font-display text-[18px] font-medium text-text">
+                  <Dialog.Title className="font-display text-[19px] font-semibold text-text">
                     {title}
                   </Dialog.Title>
                   {description && (

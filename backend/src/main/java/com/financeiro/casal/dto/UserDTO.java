@@ -9,6 +9,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -34,6 +37,8 @@ public class UserDTO {
 
     private BudgetSettingsDTO budget;
 
+    private Map<String, Double> categoryBudgets;
+
     public static UserDTO from(User u) {
         return UserDTO.builder()
                 .id(u.getId())
@@ -50,6 +55,7 @@ public class UserDTO {
                         .emergencySaved(u.getEmergencySaved())
                         .usesHouseholdIncome(u.getBudgetUsesHouseholdIncome())
                         .build())
+                .categoryBudgets(u.getCategoryBudgets() == null ? Map.of() : new TreeMap<>(u.getCategoryBudgets()))
                 .build();
     }
 }

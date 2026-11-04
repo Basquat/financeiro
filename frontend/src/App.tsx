@@ -5,7 +5,9 @@ import { useAuth, useAuthBootstrap } from '@/hooks/useAuth';
 import { ModalHost } from '@/components/modals/ModalHost';
 import { Spinner } from '@/components/ui/primitives';
 import Accounts from '@/pages/Accounts';
+import Assistente from '@/pages/Assistente';
 import Dashboard from '@/pages/Dashboard';
+import Importar from '@/pages/Importar';
 import Login from '@/pages/Login';
 import PinLogin from '@/pages/PinLogin';
 import Planejar from '@/pages/Planejar';
@@ -57,6 +59,8 @@ function Shell() {
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/planejar" element={<Planejar />} />
+        <Route path="/assistente" element={<Assistente />} />
+        <Route path="/importar" element={<Importar />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -72,12 +76,13 @@ export default function App() {
         <Shell />
         <Toaster
           position="top-center"
-          theme="dark"
+          theme="light"
           toastOptions={{
             style: {
-              background: '#1D212B',
-              border: '1px solid #2A2F3A',
-              color: '#EDEFF3',
+              background: 'rgb(var(--surface))',
+              border: '1px solid rgb(var(--line))',
+              color: 'rgb(var(--text))',
+              borderRadius: '11px',
             },
           }}
         />

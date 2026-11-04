@@ -8,6 +8,7 @@ import com.financeiro.casal.dto.UserDTO;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.security.JwtService;
 import com.financeiro.casal.service.EmailChangeService;
+import com.financeiro.casal.service.PrivacyService;
 import com.financeiro.casal.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class UserController {
     private final UserService userService;
     private final EmailChangeService emailChangeService;
     private final JwtService jwtService;
+    private final PrivacyService privacyService;
 
     @GetMapping("/me")
     public ResponseEntity<?> me(@AuthenticationPrincipal User user) {
@@ -56,6 +58,35 @@ public class UserController {
                                           @RequestBody BudgetSettingsDTO request) {
         try {
             return ResponseEntity.ok(UserDTO.from(userService.updateBudget(user.getId(), request)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/me/category-budgets")
+    public ResponseEntity<?> updateCategoryBudgets(@AuthenticationPrincipal User user,
+                                                   @RequestBody Map<String, Double> limits) {
+        try {
+            return ResponseEntity.ok(UserDTO.from(userService.updateCategoryBudgets(user.getId(), limits)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /** LGPD portability: all of the user's data as JSON. */
+    @GetMapping("/me/export")
+    public ResponseEntity<?> export(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"meus-dados.json\"")
+                .body(privacyService.export(user));
+    }
+
+    /** POST (not DELETE) so the password confirmation travels in a body every proxy keeps. */
+    @PostMapping("/me/delete")
+    public ResponseEntity<?> deleteAccount(@AuthenticationPrincipal User user, @RequestBody Map<String, String> body) {
+        try {
+            privacyService.deleteAccount(user, body.get("password"));
+            return ResponseEntity.ok(Map.of("message", "Conta excluída"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

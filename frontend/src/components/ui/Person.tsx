@@ -3,7 +3,7 @@ import type { UserSummary } from '@/types';
 import { cx } from './primitives';
 
 /** Deterministic accent per person so "who spent it" is scannable across the app. */
-const ACCENTS = ['bg-daniel/20 text-daniel', 'bg-jamile/20 text-jamile', 'bg-gold/20 text-gold'];
+const ACCENTS = ['bg-daniel/20 text-daniel', 'bg-jamile/20 text-jamile', 'bg-brand/20 text-brand'];
 
 function accentFor(id: number | undefined): string {
   if (id == null) return 'bg-surface-3 text-text-mute';

@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 @AllArgsConstructor
 public class UserService {
@@ -56,6 +59,23 @@ public class UserService {
         user.setFoodPerPerson(nonNegative(b.getFoodPerPerson()));
         user.setEmergencySaved(nonNegative(b.getEmergencySaved()));
         user.setBudgetUsesHouseholdIncome(b.getUsesHouseholdIncome());
+        return userRepository.save(user);
+    }
+
+    /** Replaces the monthly limits per category; a missing or zero limit removes it. */
+    @Transactional
+    public User updateCategoryBudgets(Long userId, Map<String, Double> limits) {
+        if (limits == null || limits.size() > 50) throw new RuntimeException("Defina até 50 categorias.");
+        Map<String, Double> clean = new HashMap<>();
+        limits.forEach((category, limit) -> {
+            String name = category == null ? "" : category.strip();
+            if (name.isEmpty() || name.length() > 100) throw new RuntimeException("Categoria inválida.");
+            if (limit != null && limit > 0) clean.put(name, Math.round(limit * 100.0) / 100.0);
+        });
+        User user = getById(userId);
+        if (user.getCategoryBudgets() == null) user.setCategoryBudgets(new HashMap<>());
+        user.getCategoryBudgets().clear();
+        user.getCategoryBudgets().putAll(clean);
         return userRepository.save(user);
     }
 

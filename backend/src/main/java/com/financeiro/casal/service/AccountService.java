@@ -1,6 +1,8 @@
 package com.financeiro.casal.service;
 
+import com.financeiro.casal.dto.AccountRequestDTO;
 import com.financeiro.casal.model.Account;
+import com.financeiro.casal.repository.RecurringTransactionRepository;
 import com.financeiro.casal.model.User;
 import com.financeiro.casal.repository.AccountRepository;
 import com.financeiro.casal.repository.TransactionRepository;
@@ -20,6 +22,7 @@ public class AccountService {
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final PartnerService partnerService;
+    private final RecurringTransactionRepository recurringRepository;
 
     @Transactional
     public Account createAccount(Account account, Long userId) {
@@ -47,12 +50,17 @@ public class AccountService {
     }
 
     @Transactional
-    public Account updateAccount(Long id, String name, Boolean isJoint, User actor) {
+    public Account updateAccount(Long id, AccountRequestDTO changes, User actor) {
         Account account = get(id, actor);
-        account.setName(name);
-        if (isJoint != null) {
-            account.setIsJoint(isJoint);
+        account.setName(changes.getName());
+        if (changes.getIsJoint() != null) {
+            account.setIsJoint(changes.getIsJoint());
         }
+        if (changes.getCreditCard() != null) {
+            account.setCreditCard(changes.getCreditCard());
+        }
+        account.setClosingDay(changes.getClosingDay());
+        account.setDueDay(changes.getDueDay());
         return accountRepository.save(account);
     }
 
@@ -62,6 +70,7 @@ public class AccountService {
         if (!transactionRepository.findByAccountIdOrderByTransactionDateDesc(id).isEmpty()) {
             throw new RuntimeException("Esta conta tem lançamentos. Exclua os lançamentos primeiro.");
         }
+        recurringRepository.deleteByAccountId(id);
         accountRepository.delete(account);
     }
 

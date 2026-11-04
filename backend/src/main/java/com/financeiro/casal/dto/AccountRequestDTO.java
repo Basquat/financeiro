@@ -1,5 +1,7 @@
 package com.financeiro.casal.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
@@ -20,4 +22,15 @@ public class AccountRequestDTO {
 
     @NotNull(message = "É necessário especificar se a conta é conjunta ou pessoal")
     private Boolean isJoint;
+
+    // Cartão de crédito (opcional)
+    private Boolean creditCard;
+
+    @Min(value = 1, message = "Dia de fechamento entre 1 e 31")
+    @Max(value = 31, message = "Dia de fechamento entre 1 e 31")
+    private Integer closingDay;
+
+    @Min(value = 1, message = "Dia de vencimento entre 1 e 31")
+    @Max(value = 31, message = "Dia de vencimento entre 1 e 31")
+    private Integer dueDay;
 }

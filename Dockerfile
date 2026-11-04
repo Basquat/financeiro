@@ -24,7 +24,8 @@ RUN cd backend && ./mvnw -B -ntp clean package -DskipTests \
 # ---------- 3. Runtime ----------
 FROM eclipse-temurin:26-jre-alpine
 WORKDIR /app
-RUN addgroup -S app && adduser -S app -G app
+# fontes para o PDFBox renderizar PDFs escaneados (assistente) no Alpine headless
+RUN apk add --no-cache fontconfig ttf-dejavu && addgroup -S app && adduser -S app -G app
 COPY --from=backend /src/backend/target/casal-financeiro-0.0.1-SNAPSHOT.jar app.jar
 USER app
 EXPOSE 8080

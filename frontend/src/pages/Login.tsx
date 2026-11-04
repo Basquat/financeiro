@@ -3,6 +3,7 @@ import { apiError } from '@/lib/api';
 import { useAuthActions } from '@/hooks/useAuth';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/primitives';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 type Mode = 'login' | 'register';
 
@@ -33,18 +34,10 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center px-4">
-      <div className="w-full max-w-sm animate-rise">
-        <div className="mb-8 text-center">
-          <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gold/15 font-display text-[22px] text-gold">
-            F
-          </span>
-          <h1 className="font-display text-[26px] font-medium text-text">finance+</h1>
-          <p className="mt-1 text-[14px] text-text-mute">
-            {mode === 'login' ? 'Seu ledger, num só lugar.' : 'Crie sua conta para começar.'}
-          </p>
-        </div>
-
+    <AuthLayout
+      title={mode === 'login' ? 'Bem-vindos de volta' : 'Criar conta'}
+      subtitle={mode === 'login' ? 'Entre para ver como está o seu mês.' : 'Leva menos de um minuto.'}
+    >
         <form onSubmit={submit} className="space-y-4">
           {mode === 'register' && (
             <Field label="Nome">
@@ -91,7 +84,7 @@ export default function Login() {
           </Field>
 
           {error && (
-            <p className="rounded-md border border-expense/30 bg-expense/10 px-3 py-2 text-[13px] text-expense">
+            <p className="rounded-md border border-expense/25 bg-expense/10 px-3 py-2 text-[13px] text-expense">
               {error}
             </p>
           )}
@@ -108,12 +101,11 @@ export default function Login() {
               setMode(mode === 'login' ? 'register' : 'login');
               setError(null);
             }}
-            className="font-medium text-gold hover:underline focus-ring"
+            className="font-medium text-brand hover:underline focus-ring"
           >
             {mode === 'login' ? 'Cadastre-se' : 'Entrar'}
           </button>
         </p>
-      </div>
-    </div>
+    </AuthLayout>
   );
 }

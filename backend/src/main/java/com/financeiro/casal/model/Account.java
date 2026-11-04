@@ -34,6 +34,16 @@ public class Account {
     )
     private List<User> owners;
 
+    /** Cartão de crédito: o saldo negativo é a fatura em aberto; pagar = transferir de outra conta. */
+    @Column(name = "credit_card")
+    private Boolean creditCard;
+
+    @Column(name = "closing_day")
+    private Integer closingDay;
+
+    @Column(name = "due_day")
+    private Integer dueDay;
+
     /** Who created the account — kept when a partnership is dissolved. */
     @ManyToOne
     @JoinColumn(name = "creator_id")

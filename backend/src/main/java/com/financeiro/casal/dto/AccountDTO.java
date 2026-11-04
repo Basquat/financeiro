@@ -27,6 +27,12 @@ public class AccountDTO {
 
     private Double currentBalance;
 
+    private Boolean creditCard;
+
+    private Integer closingDay;
+
+    private Integer dueDay;
+
     @Size(max = 1000, message = "Lista de proprietários muito grande")
     private List<UserSummaryDTO> owners;
 }

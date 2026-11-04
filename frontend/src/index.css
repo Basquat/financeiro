@@ -3,8 +3,55 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light: warm paper + pine. */
   :root {
+    color-scheme: light;
+    --canvas: 244 241 234;
+    --surface: 255 255 255;
+    --surface-2: 243 240 232;
+    --surface-3: 232 227 216;
+    --line: 226 220 208;
+    --line-soft: 236 232 223;
+    --text: 23 26 23;
+    --text-dim: 74 81 75;
+    --text-mute: 110 116 109;
+    --brand: 29 74 58;
+    --brand-bright: 38 96 75;
+    --brand-soft: 226 236 229;
+    --brand-deep: 19 52 42;
+    --lime-soft: 241 248 211;
+    --income: 15 122 95;
+    --expense: 192 83 27;
+    --daniel: 52 97 199;
+    --jamile: 169 80 143;
+    --chart-in: 18 134 107; /* #12866B */
+    --chart-out: 220 106 44; /* #DC6A2C */
+  }
+
+  /* Dark: green-tinted charcoal, never pure black; surfaces get lighter as they rise.
+     Brand flips to a light mint so `bg-brand text-canvas` stays legible in both themes. */
+  .dark {
     color-scheme: dark;
+    --canvas: 17 20 18;
+    --surface: 25 29 26;
+    --surface-2: 33 38 34;
+    --surface-3: 43 49 44;
+    --line: 44 50 45;
+    --line-soft: 35 40 36;
+    --text: 236 238 232;
+    --text-dim: 182 189 180;
+    --text-mute: 138 146 136;
+    --brand: 154 217 181;
+    --brand-bright: 178 228 199;
+    --brand-soft: 28 46 37;
+    --brand-deep: 13 31 23;
+    --lime-soft: 42 51 28;
+    --income: 76 199 154;
+    --expense: 240 145 90;
+    --daniel: 127 163 240;
+    --jamile: 224 139 200;
+    --chart-in: 46 163 121; /* #2EA379 */
+    --chart-out: 214 112 47; /* #D6702F */
   }
 
   * {
@@ -17,15 +64,13 @@
 
   body {
     margin: 0;
-    background-color: theme('colors.ink');
+    background-color: theme('colors.canvas');
     color: theme('colors.text');
     font-family: theme('fontFamily.sans');
-    font-feature-settings: 'ss01' 1, 'cv05' 1;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  /* Native form controls readable on dark */
   input,
   select,
   textarea,
@@ -34,14 +79,16 @@
     color: inherit;
   }
 
-  input[type='date']::-webkit-calendar-picker-indicator {
-    filter: invert(0.7);
-    cursor: pointer;
+  h1,
+  h2,
+  h3 {
+    font-family: theme('fontFamily.display');
+    letter-spacing: -0.02em;
   }
 
   ::selection {
-    background: theme('colors.gold.DEFAULT');
-    color: theme('colors.ink');
+    background: theme('colors.lime.DEFAULT');
+    color: theme('colors.brand.deep');
   }
 
   ::-webkit-scrollbar {
@@ -49,31 +96,33 @@
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    background: theme('colors.line');
-    border-radius: 999px;
-    border: 3px solid theme('colors.ink');
-  }
-  ::-webkit-scrollbar-thumb:hover {
     background: theme('colors.surface-3');
+    border-radius: 999px;
+    border: 3px solid theme('colors.canvas');
   }
 }
 
 @layer components {
-  /* Ledger amounts share one treatment everywhere they appear */
+  /* Every money value shares one treatment */
   .amount {
     font-family: theme('fontFamily.mono');
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.03em;
   }
 
   .field-input {
-    @apply w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 text-[15px] text-text
+    @apply w-full rounded-md border border-line bg-surface px-3.5 py-2.5 text-[15px] text-text
       placeholder:text-text-mute outline-none transition
-      focus:border-gold/70 focus:ring-2 focus:ring-gold/25;
+      hover:border-surface-3 focus:border-brand focus:ring-4 focus:ring-brand/10;
   }
 
   .focus-ring {
-    @apply outline-none focus-visible:ring-2 focus-visible:ring-gold/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink;
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+  }
+
+  /* Small uppercase label above numbers */
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-[0.08em] text-text-mute;
   }
 }
 

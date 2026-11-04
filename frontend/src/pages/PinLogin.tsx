@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiError } from '@/lib/api';
 import { useAuthActions } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/primitives';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 const PIN_LENGTH = 6;
 
@@ -58,22 +59,14 @@ export default function PinLogin() {
     <div
       key={i}
       className={`h-3 w-3 rounded-full transition ${
-        i < pin.length ? 'bg-gold' : 'bg-line-soft'
+        i < pin.length ? 'scale-110 bg-brand' : 'bg-surface-3'
       }`}
     />
   ));
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center px-4">
-      <div className="mb-8 text-center">
-        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gold/15 font-display text-[22px] text-gold">
-          F
-        </span>
-        <h1 className="font-display text-[26px] font-medium text-text">finance+</h1>
-        <p className="mt-1 text-[14px] text-text-mute">Digite seu PIN para entrar.</p>
-      </div>
-
-      <div className="flex w-full max-w-xs flex-col items-center gap-6">
+    <AuthLayout title="Digite seu PIN" subtitle="Acesso rápido neste aparelho.">
+      <div className="flex w-full flex-col items-center gap-6">
         <div className="flex items-center gap-3">{dots}</div>
 
         {error && (
@@ -93,7 +86,7 @@ export default function PinLogin() {
                 className={`flex h-14 items-center justify-center rounded-xl text-[18px] font-medium transition focus-ring ${
                   isAction
                     ? 'invisible'
-                    : 'bg-surface-2 text-text hover:bg-line-soft active:scale-95'
+                    : 'amount border border-line bg-surface text-[20px] text-text shadow-card hover:border-brand/40 active:scale-95'
                 }`}
               >
                 {key}
@@ -106,6 +99,6 @@ export default function PinLogin() {
           Entrar com e-mail e senha
         </Button>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

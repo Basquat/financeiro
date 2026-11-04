@@ -40,6 +40,9 @@ public class AccountController {
             Account account = Account.builder()
                     .name(request.getName())
                     .isJoint(request.getIsJoint())
+                    .creditCard(Boolean.TRUE.equals(request.getCreditCard()))
+                    .closingDay(request.getClosingDay())
+                    .dueDay(request.getDueDay())
                     .build();
             return ResponseEntity.ok(toDTO(accountService.createAccount(account, currentUser.getId())));
         } catch (Exception e) {
@@ -52,7 +55,7 @@ public class AccountController {
                                            @PathVariable Long id,
                                            @Valid @RequestBody AccountRequestDTO request) {
         try {
-            Account updated = accountService.updateAccount(id, request.getName(), request.getIsJoint(), currentUser);
+            Account updated = accountService.updateAccount(id, request, currentUser);
             return ResponseEntity.ok(toDTO(updated));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -75,6 +78,9 @@ public class AccountController {
                 .name(account.getName())
                 .isJoint(account.getIsJoint())
                 .currentBalance(accountService.balanceOf(account.getId()))
+                .creditCard(Boolean.TRUE.equals(account.getCreditCard()))
+                .closingDay(account.getClosingDay())
+                .dueDay(account.getDueDay())
                 .owners(account.getOwners() == null ? List.of() : account.getOwners().stream()
                         .map(owner -> UserSummaryDTO.builder()
                                 .id(owner.getId())

@@ -7,34 +7,31 @@ import { cx } from '@/components/ui/primitives';
 function LedgerRow({ tx, onSelect }: { tx: Transaction; onSelect?: (tx: Transaction) => void }) {
   const negative = tx.amount < 0;
   const installment =
-    tx.installmentCurrent && tx.installmentTotal
-      ? `Parcela ${tx.installmentCurrent}/${tx.installmentTotal}`
-      : null;
+    tx.installmentCurrent && tx.installmentTotal ? `${tx.installmentCurrent}/${tx.installmentTotal}` : null;
 
   const body = (
     <>
-      <PersonDot person={tx.user} />
+      {/* who spent only matters in a shared account */}
+      {tx.account?.isJoint && <PersonDot person={tx.user} />}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-medium text-text">{tx.title}</p>
-        <p className="truncate text-[12px] text-text-mute">
-          {tx.category}
-          {tx.account ? ` · ${tx.account.name}` : ''}
-          {installment ? ` · ${installment}` : ''}
+        <p className="mt-0.5 flex items-center gap-1.5 truncate text-[12px] text-text-mute">
+          <span className="rounded-full bg-surface-2 px-2 py-px text-text-dim">{tx.category}</span>
+          {tx.account && <span className="truncate">{tx.account.name}</span>}
+          {installment && <span className="amount">· {installment}</span>}
         </p>
       </div>
-      <span className={cx('amount shrink-0 text-[14px] font-medium', negative ? 'text-expense' : 'text-income')}>
+      <span className={cx('amount shrink-0 text-[14px] font-medium', negative ? 'text-text' : 'text-income')}>
         {signedMoney(tx.amount)}
       </span>
     </>
   );
 
-  if (!onSelect) {
-    return <div className="flex items-center gap-3 py-3">{body}</div>;
-  }
+  if (!onSelect) return <div className="flex items-center gap-3 py-3">{body}</div>;
   return (
     <button
       onClick={() => onSelect(tx)}
-      className="flex w-full items-center gap-3 rounded-md py-3 pl-1 pr-1 text-left transition hover:bg-surface-2 focus-ring"
+      className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-md px-2 py-3 text-left transition hover:bg-surface-2 focus-ring"
     >
       {body}
     </button>
@@ -66,11 +63,16 @@ export function Ledger({
   }, [transactions, limit]);
 
   return (
-    <div className="divide-y divide-line-soft">
+    <div>
       {groups.map(([day, rows]) => (
         <Fragment key={day}>
-          <div className="sticky top-0 z-[1] bg-surface/95 py-2 text-[11px] font-medium uppercase tracking-wide text-text-mute backdrop-blur">
-            {dayLabel(rows[0].transactionDate)}
+          <div className="sticky top-0 z-[1] flex items-center justify-between bg-surface/95 pb-1 pt-3 backdrop-blur">
+            <span className="eyebrow">{dayLabel(rows[0].transactionDate)}</span>
+            {rows.length > 1 && (
+              <span className="amount text-[11px] text-text-mute">
+                {signedMoney(rows.reduce((s, t) => s + t.amount, 0))}
+              </span>
+            )}
           </div>
           <div className="divide-y divide-line-soft">
             {rows.map((tx) => (

@@ -19,4 +19,6 @@ public interface SharedGoalRepository extends JpaRepository<SharedGoal, Long> {
     List<SharedGoal> findVisibleTo(@Param("uid") Long userId);
 
     List<SharedGoal> findByPartnershipId(Long partnershipId);
+
+    List<SharedGoal> findByOwnerId(Long ownerId);
 }

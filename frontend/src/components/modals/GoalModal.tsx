@@ -158,7 +158,7 @@ export function GoalModal() {
                   className={cx(
                     'flex h-10 w-10 items-center justify-center rounded-md border text-[18px] transition focus-ring',
                     icon === opt.key
-                      ? 'border-gold bg-gold/15'
+                      ? 'border-brand bg-brand/15'
                       : 'border-line bg-surface-2 hover:bg-surface-3',
                   )}
                   aria-pressed={icon === opt.key}

@@ -61,6 +61,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/pin/set").authenticated()
                 .requestMatchers("/api/auth/pin").authenticated()
                 .requestMatchers("/api/actuator/**").permitAll()
+                .requestMatchers("/api/telegram/webhook").permitAll() // authenticated by Telegram's secret header
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
                 // everything else is the static React app / its client-side routes

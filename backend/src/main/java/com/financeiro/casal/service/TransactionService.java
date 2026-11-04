@@ -10,11 +10,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @AllArgsConstructor
 public class TransactionService {
+
+    public static final String TRANSFER_CATEGORY = "Transferência";
 
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
@@ -58,6 +61,28 @@ public class TransactionService {
                 .orElseThrow(() -> new RuntimeException("Lançamento não encontrado"));
         assertCanTouch(tx, actor);
         transactionRepository.delete(tx);
+    }
+
+    /**
+     * Moves money between two of the user's accounts: an expense on one, an income on the other, both in
+     * {@link #TRANSFER_CATEGORY} so reports can leave them out. Paying a credit card bill is a transfer to it.
+     */
+    @Transactional
+    public List<Transaction> transfer(Long fromAccountId, Long toAccountId, Double amount, LocalDateTime date, User actor) {
+        if (fromAccountId == null || fromAccountId.equals(toAccountId)) throw new RuntimeException("Escolha duas contas diferentes");
+        if (amount == null || !(amount > 0)) throw new RuntimeException("Informe um valor maior que zero");
+        User user = userRepository.findById(actor.getId())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        Account from = ownedAccount(fromAccountId, user.getId());
+        Account to = ownedAccount(toAccountId, user.getId());
+        LocalDateTime when = date == null ? LocalDateTime.now() : date;
+        Transaction out = Transaction.builder().title("Transferência para " + to.getName()).amount(-amount)
+                .transactionDate(when).type(Transaction.TransactionType.EXPENSE).category(TRANSFER_CATEGORY)
+                .user(user).account(from).build();
+        Transaction in = Transaction.builder().title("Transferência de " + from.getName()).amount(amount)
+                .transactionDate(when).type(Transaction.TransactionType.INCOME).category(TRANSFER_CATEGORY)
+                .user(user).account(to).build();
+        return transactionRepository.saveAll(List.of(out, in));
     }
 
     public List<Transaction> getUserTransactions(Long userId) {

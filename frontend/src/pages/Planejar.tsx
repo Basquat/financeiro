@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUi } from '@/hooks/useUi';
 import type { BudgetSettings } from '@/types';
 import { AppShell } from '@/components/layout/AppShell';
+import { CategoryLimits, RecurringManager } from '@/components/PlanSections';
 import { Field, MoneyInput, parseAmount } from '@/components/ui/Field';
 import { Button, Card, EmptyState, Pill, ProgressBar, cx } from '@/components/ui/primitives';
 
@@ -92,7 +93,7 @@ function Orcamento() {
             type="checkbox"
             checked={noHousing}
             onChange={(e) => setNoHousing(e.target.checked)}
-            className="h-4 w-4 rounded border-line bg-surface-2 accent-gold"
+            className="h-4 w-4 rounded border-line bg-surface-2 accent-brand"
           />
           Não pago moradia (moro de graça / com a família)
         </label>
@@ -119,7 +120,7 @@ function Orcamento() {
             type="checkbox"
             checked={paysFood}
             onChange={(e) => setPaysFood(e.target.checked)}
-            className="h-4 w-4 rounded border-line bg-surface-2 accent-gold"
+            className="h-4 w-4 rounded border-line bg-surface-2 accent-brand"
           />
           Eu pago a alimentação da casa
         </label>
@@ -154,7 +155,7 @@ function Orcamento() {
             {essentialsPct.toFixed(0)}% da renda · ideal até 50%
           </p>
         </div>
-        <ProgressBar pct={essentialsPct} tone={essentialsPct > 55 ? 'gold' : 'income'} />
+        <ProgressBar pct={essentialsPct} tone={essentialsPct > 55 ? 'brand' : 'income'} />
         <div className="mt-2 divide-y divide-line-soft">
           {plan.essentials.map((l) => (
             <LineRow key={l.key} line={l} income={income} />
@@ -274,7 +275,7 @@ function Investir() {
                 <p
                   className={cx(
                     'rounded-md px-3 py-2 text-[12px]',
-                    fitsBudget ? 'bg-income/10 text-income' : 'bg-gold-soft text-gold-bright',
+                    fitsBudget ? 'bg-income/10 text-income' : 'bg-brand-soft text-brand-bright',
                   )}
                 >
                   {fitsBudget
@@ -311,19 +312,28 @@ function Investir() {
 /* ---------------- Page ---------------- */
 
 export default function Planejar() {
-  const [tab, setTab] = useState<'orcamento' | 'investir'>('orcamento');
+  const [tab, setTab] = useState<'orcamento' | 'limites' | 'fixas' | 'investir'>('orcamento');
   return (
     <AppShell title="Planejar">
       <div className="space-y-4">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Pill active={tab === 'orcamento'} onClick={() => setTab('orcamento')}>
             Orçamento
+          </Pill>
+          <Pill active={tab === 'limites'} onClick={() => setTab('limites')}>
+            Limites
+          </Pill>
+          <Pill active={tab === 'fixas'} onClick={() => setTab('fixas')}>
+            Contas fixas
           </Pill>
           <Pill active={tab === 'investir'} onClick={() => setTab('investir')}>
             Investir
           </Pill>
         </div>
-        {tab === 'orcamento' ? <Orcamento /> : <Investir />}
+        {tab === 'orcamento' && <Orcamento />}
+        {tab === 'limites' && <CategoryLimits />}
+        {tab === 'fixas' && <RecurringManager />}
+        {tab === 'investir' && <Investir />}
       </div>
     </AppShell>
   );

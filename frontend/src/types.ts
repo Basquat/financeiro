@@ -23,6 +23,7 @@ export interface User {
   salary?: number | null;
   budget?: BudgetSettings | null;
   pinEnabled?: boolean;
+  categoryBudgets?: Record<string, number>; // monthly limit per category
 }
 
 export interface AuthResult {
@@ -63,11 +64,40 @@ export interface Account {
   isJoint: boolean;
   currentBalance?: number | null;
   owners?: UserSummary[] | null;
+  creditCard?: boolean | null; // a negative balance is the open bill
+  closingDay?: number | null;
+  dueDay?: number | null;
 }
 
 export interface AccountInput {
   name: string;
   isJoint: boolean;
+  creditCard?: boolean;
+  closingDay?: number | null;
+  dueDay?: number | null;
+}
+
+/** A monthly bill or income, posted with one tap. */
+export interface Recurring {
+  id: number;
+  title: string;
+  amount: number; // always positive; type gives the sign
+  type: TransactionType;
+  category: string;
+  dayOfMonth: number;
+  accountId: number;
+  accountName: string;
+  pendingThisMonth: boolean;
+}
+
+export type RecurringInput = Pick<Recurring, 'title' | 'amount' | 'type' | 'category' | 'dayOfMonth' | 'accountId'>;
+
+export interface ImportRow {
+  date: string; // yyyy-MM-dd
+  title: string;
+  amount: number; // signed
+  category: string;
+  duplicate: boolean;
 }
 
 export interface InstallmentPlan {
@@ -107,4 +137,50 @@ export interface SharedGoalInput {
   targetAmount: number;
   deadline: string;
   icon: string;
+}
+
+/* ---------- Assistente (IA) ---------- */
+
+export interface AiProvider {
+  id: string;
+  label: string;
+}
+
+export interface AssistantSettings {
+  providers: AiProvider[];
+  provider?: string | null;
+  model?: string | null;
+  hasKey: boolean;
+  keyHint?: string | null;
+  notes?: string | null;
+}
+
+export interface AssistantSettingsInput {
+  provider: string;
+  model: string;
+  apiKey?: string | null; // null = keep the saved key, '' = remove it
+  notes: string;
+}
+
+/** A write the assistant proposed; runs only when the user confirms the card. */
+export interface AssistantAction {
+  tool: string;
+  label: string;
+  args: Record<string, unknown>;
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatAttachment {
+  name: string;
+  mediaType: string;
+  data: string; // base64
+}
+
+export interface ChatReply {
+  reply: string;
+  actions: AssistantAction[];
 }

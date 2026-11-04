@@ -25,4 +25,9 @@ export const transactionService = {
   async remove(id: number): Promise<void> {
     await api.delete(`/transactions/${id}`);
   },
+
+  /** Between two of your accounts (paying a credit card bill = transfer to the card). */
+  async transfer(fromAccountId: number, toAccountId: number, amount: number): Promise<void> {
+    await api.post('/transactions/transfer', { fromAccountId, toAccountId, amount });
+  },
 };

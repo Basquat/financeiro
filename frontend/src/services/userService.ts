@@ -17,6 +17,22 @@ export const userService = {
     return data;
   },
 
+  /** Replaces all monthly limits; a category left out (or 0) has no limit. */
+  async updateCategoryBudgets(limits: Record<string, number>): Promise<User> {
+    const { data } = await api.put<User>('/users/me/category-budgets', limits);
+    return data;
+  },
+
+  /** LGPD: everything stored about you, as JSON. */
+  async exportData(): Promise<Blob> {
+    const { data } = await api.get('/users/me/export', { responseType: 'blob' });
+    return data as Blob;
+  },
+
+  async deleteAccount(password: string): Promise<void> {
+    await api.post('/users/me/delete', { password });
+  },
+
   async requestEmailChange(newEmail: string): Promise<string> {
     const { data } = await api.post<{ message: string }>('/users/me/email/request', { newEmail });
     return data.message;

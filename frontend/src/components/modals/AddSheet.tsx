@@ -41,9 +41,9 @@ export function AddSheet() {
           <button
             key={target}
             onClick={() => goTo(target)}
-            className="flex items-center gap-3 rounded-md border border-line bg-surface-2 p-3 text-left transition hover:bg-surface-3 focus-ring"
+            className="flex items-center gap-3 rounded-md border border-line bg-surface p-3 text-left transition hover:border-brand/40 hover:bg-brand-soft/50 focus-ring"
           >
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gold/15 text-gold">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-lime text-brand-deep">
               <Icon className="h-5 w-5" />
             </span>
             <span>
