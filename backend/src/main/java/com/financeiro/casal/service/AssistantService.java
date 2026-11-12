@@ -49,7 +49,7 @@ public class AssistantService {
     public record Provider(String id, String label, String baseUrl) {}
 
     public record Settings(List<Provider> providers, String provider, String model,
-                           boolean hasKey, String keyHint, String notes) {}
+                           boolean hasKey, String keyHint, String notes, boolean platformAi) {}
 
     public record ChatMessage(String role, String content) {}
 
@@ -117,6 +117,20 @@ public class AssistantService {
     private final ObjectMapper json;
     private final SecretKeySpec aesKey;
     private final SecureRandom random = new SecureRandom();
+    @Value("${app.ai.server-key:}") private String serverKey;
+    @Value("${app.ai.server-provider:google}") private String serverProvider;
+    @Value("${app.ai.server-model:gemini-2.5-flash-lite}") private String serverModel;
+    @Value("${app.ai.daily-limit:30}") private int dailyLimit;
+    // ponytail: in-memory per-user counter, resets on restart and isn't shared across instances; move to the DB if we scale out.
+    private final java.util.Map<Long, long[]> quota = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Messages answered with the platform's key are capped per user per day (Brasília) so one account can't run up the bill. */
+    private void takeDailyQuota(Long userId) {
+        long today = LocalDate.now(AssistantTools.ZONE).toEpochDay();
+        long[] q = quota.compute(userId, (k, v) -> v == null || v[0] != today ? new long[]{today, 1} : new long[]{today, v[1] + 1});
+        if (q[1] > dailyLimit) throw new RuntimeException("Você atingiu o limite diário do assistente (" + dailyLimit
+                + " mensagens). Volte amanhã ou use a sua própria chave em Configurações do assistente.");
+    }
 
     /** Created on first call, not at boot (the client opens a selector socket as soon as it exists). */
     private static final class Http {
@@ -143,7 +157,7 @@ public class AssistantService {
         User u = userService.getById(user.getId());
         String key = tryDecrypt(u.getAiKeyEnc());
         String hint = key == null ? null : "••••" + key.substring(Math.max(0, key.length() - 4));
-        return new Settings(PROVIDERS, u.getAiProvider(), u.getAiModel(), key != null, hint, u.getAiNotes());
+        return new Settings(PROVIDERS, u.getAiProvider(), u.getAiModel(), key != null, hint, u.getAiNotes(), !serverKey.isBlank());
     }
 
     /** {@code apiKey}: null keeps the saved one, blank removes it. {@code notes}: null keeps them. */
@@ -175,11 +189,23 @@ public class AssistantService {
 
     public ChatReply chat(User user, List<ChatMessage> history, Attachment attachment) {
         User u = userService.getById(user.getId());
-        if (u.getAiProvider() == null) throw new RuntimeException("Configure o assistente: escolha o provedor e cole sua chave.");
-        Provider provider = provider(u.getAiProvider());
-        String key = tryDecrypt(u.getAiKeyEnc());
-        if (key == null) throw new RuntimeException("Cole a chave da API do provedor nas configurações do assistente.");
-        if (u.getAiModel() == null || u.getAiModel().isBlank()) throw new RuntimeException("Escolha um modelo nas configurações do assistente.");
+        Provider provider;
+        String key;
+        String model;
+        boolean own = u.getAiProvider() != null && tryDecrypt(u.getAiKeyEnc()) != null;
+        if (own) {
+            provider = provider(u.getAiProvider());
+            key = tryDecrypt(u.getAiKeyEnc());
+            model = u.getAiModel();
+            if (model == null || model.isBlank()) throw new RuntimeException("Escolha um modelo nas configurações do assistente.");
+        } else if (!serverKey.isBlank()) {
+            takeDailyQuota(u.getId());
+            provider = provider(serverProvider);
+            key = serverKey;
+            model = serverModel;
+        } else {
+            throw new RuntimeException("Configure o assistente: escolha o provedor e cole sua chave.");
+        }
 
         ArrayNode messages = json.createArrayNode();
         messages.addObject().put("role", "system").put("content", PROMPT.formatted(
@@ -189,7 +215,7 @@ public class AssistantService {
 
         List<Action> actions = new ArrayList<>();
         for (int round = 0; round < MAX_ROUNDS; round++) {
-            ObjectNode body = json.createObjectNode().put("model", u.getAiModel());
+            ObjectNode body = json.createObjectNode().put("model", model);
             body.set("messages", messages);
             body.set("tools", toolDefs);
             JsonNode message = callProvider(provider, key, "/chat/completions", body).path("choices").path(0).path("message");

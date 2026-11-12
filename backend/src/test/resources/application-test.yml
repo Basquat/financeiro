@@ -1,5 +1,7 @@
 # Profile used by ApiIntegrationTest — throwaway in-memory H2, recriada a cada run.
 spring:
+  flyway:
+    enabled: false # tests build the schema with Hibernate on H2; the migration is PostgreSQL-only
   sql:
     init:
       mode: never
@@ -14,6 +16,8 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
 
 app:
+  email-verification:
+    required: false
   jwt:
     secret: test-only-secret-at-least-32-bytes-long!!
 

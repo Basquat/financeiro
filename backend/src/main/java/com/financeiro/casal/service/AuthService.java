@@ -33,16 +33,22 @@ public class AuthService {
     // ponytail: in-memory per instance (one container today); move to a DB/Redis table if it ever scales out
     private final Map<String, long[]> failures = new ConcurrentHashMap<>();
 
-    public User registerUser(String email, String password, String name) {
+    public User registerUser(String email, String password, String name, boolean verified) {
         Optional<User> existingUser = userRepository.findByEmail(email);
         if (existingUser.isPresent()) {
-            throw new RuntimeException("Email already registered");
+            User old = existingUser.get();
+            if (!AccountCodeService.unverified(old)) throw new RuntimeException("Email already registered");
+            // someone signed up with this address and never confirmed it: the real owner takes it over
+            old.setPassword(passwordEncoder.encode(password));
+            old.setName(name);
+            return userRepository.save(old);
         }
 
         User user = User.builder()
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .name(name)
+                .emailVerified(verified)
                 .roles(Collections.singletonList("USER"))
                 .build();
 

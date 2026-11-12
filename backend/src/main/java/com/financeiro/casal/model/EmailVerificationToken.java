@@ -37,6 +37,9 @@ public class EmailVerificationToken {
     @Builder.Default
     private boolean used = false;
 
+    /** null = e-mail change (legacy rows), VERIFY = signup confirmation, RESET = password reset. */
+    private String purpose;
+
     @Column(name = "created_at", nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

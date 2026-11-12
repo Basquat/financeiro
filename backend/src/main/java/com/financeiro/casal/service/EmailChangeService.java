@@ -63,7 +63,7 @@ public class EmailChangeService {
                 .build();
         tokenRepository.save(token);
 
-        sendCode(newEmail, user.getName(), code);
+        sendCode(newEmail, user.getName(), code, "alterar o e-mail da sua conta");
     }
 
     /**
@@ -103,17 +103,17 @@ public class EmailChangeService {
         return managed;
     }
 
-    private void sendCode(String toEmail, String name, String code) {
+    void sendCode(String toEmail, String name, String code, String reason) {
         String body = """
                 Olá %s,
 
-                Recebemos um pedido para alterar o e-mail da sua conta no Finanças do Casal.
+                Recebemos um pedido para %s no Finanças do Casal.
                 Use o código abaixo para confirmar (expira em %d minutos):
 
                     %s
 
                 Se você não fez esse pedido, ignore este e-mail.
-                """.formatted(name, expirationMinutes, code);
+                """.formatted(name, reason, expirationMinutes, code);
 
         if (smtpUser == null || smtpUser.isBlank()) {
             // No SMTP configured (e.g. local dev): log the code so it can still be used.

@@ -151,6 +151,7 @@ export interface AssistantSettings {
   provider?: string | null;
   model?: string | null;
   hasKey: boolean;
+  platformAi: boolean;
   keyHint?: string | null;
   notes?: string | null;
 }

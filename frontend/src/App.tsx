@@ -8,6 +8,7 @@ import Accounts from '@/pages/Accounts';
 import Assistente from '@/pages/Assistente';
 import Dashboard from '@/pages/Dashboard';
 import Importar from '@/pages/Importar';
+import Legal from '@/pages/Legal';
 import Login from '@/pages/Login';
 import PinLogin from '@/pages/PinLogin';
 import Planejar from '@/pages/Planejar';
@@ -34,14 +35,17 @@ function Splash() {
 
 function Shell() {
   useAuthBootstrap();
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, isLocked } = useAuth();
 
   if (isLoading) return <Splash />;
+  if (isLocked) return <PinLogin />;
 
   if (!isAuthenticated) {
     const pinEnabled = typeof window !== 'undefined' && localStorage.getItem('financeiro.pin_enabled') === 'true';
     return (
       <Routes>
+        <Route path="/termos" element={<Legal kind="termos" />} />
+        <Route path="/privacidade" element={<Legal kind="privacidade" />} />
         <Route path="/login" element={<Login />} />
         <Route path="/pin-login" element={<PinLogin />} />
         <Route
@@ -62,6 +66,8 @@ function Shell() {
         <Route path="/assistente" element={<Assistente />} />
         <Route path="/importar" element={<Importar />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/termos" element={<Legal kind="termos" />} />
+        <Route path="/privacidade" element={<Legal kind="privacidade" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ModalHost />

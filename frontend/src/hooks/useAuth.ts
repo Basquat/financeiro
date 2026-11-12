@@ -9,16 +9,39 @@ type Status = 'loading' | 'authenticated' | 'anonymous';
 interface AuthState {
   user: User | null;
   status: Status;
+  /** PIN gate: a stored token alone doesn't open the app when the account has a PIN. */
+  unlocked: boolean;
+  unlock: () => void;
   setUser: (user: User | null) => void;
   setStatus: (status: Status) => void;
   patchUser: (patch: Partial<User>) => void;
   logout: () => void;
 }
 
+const UNLOCK_KEY = 'financeiro.unlocked';
+const readUnlocked = () => {
+  try {
+    return sessionStorage.getItem(UNLOCK_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
 const useAuthStore = create<AuthState>((set) => ({
   user: null,
   status: tokenStore.get() ? 'loading' : 'anonymous',
+  unlocked: readUnlocked(),
+  unlock: () => {
+    try {
+      sessionStorage.setItem(UNLOCK_KEY, '1');
+    } catch {
+      /* noop */
+    }
+    set({ unlocked: true });
+  },
   setUser: (user) => {
+    // Profile edits while already inside the app must not lock the user out (e.g. right after enabling a PIN).
+    if (useAuthStore.getState().status === 'authenticated') useAuthStore.getState().unlock();
     set({ user, status: user ? 'authenticated' : 'anonymous' });
     try {
       localStorage.setItem('financeiro.pin_enabled', user?.pinEnabled ? 'true' : 'false');
@@ -34,12 +57,12 @@ const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     authService.logout();
     try {
-      localStorage.removeItem('financeiro.pin_enabled');
-      localStorage.removeItem('financeiro.pin_email');
+      sessionStorage.removeItem(UNLOCK_KEY);
     } catch {
       /* noop */
     }
-    set({ user: null, status: 'anonymous' });
+    // pin_enabled / pin_email stay: after a logout or an expired token this device still offers the PIN screen.
+    set({ user: null, status: 'anonymous', unlocked: false });
   },
 }));
 
@@ -71,10 +94,11 @@ export function useAuthBootstrap() {
 }
 
 export function useAuth() {
-  const { user, status } = useAuthStore();
+  const { user, status, unlocked } = useAuthStore();
   return {
     user,
     status,
+    isLocked: status === 'authenticated' && !!user?.pinEnabled && !unlocked,
     isLoading: status === 'loading',
     isAuthenticated: status === 'authenticated',
   };
@@ -88,14 +112,24 @@ export function useAuthActions() {
   return {
     async login(email: string, password: string) {
       const { user } = await authService.login(email, password);
+      useAuthStore.getState().unlock();
       setUser(user);
     },
     async register(name: string, email: string, password: string) {
-      const { user } = await authService.register(name, email, password);
+      const res = await authService.register(name, email, password);
+      if (!res) return false; // e-mail code still pending
+      useAuthStore.getState().unlock();
+      setUser(res.user);
+      return true;
+    },
+    async verify(email: string, code: string) {
+      const { user } = await authService.verify(email, code);
+      useAuthStore.getState().unlock();
       setUser(user);
     },
     async pinLogin(pin: string) {
       const { user } = await authService.pinLogin(pin);
+      useAuthStore.getState().unlock();
       setUser(user);
     },
     patchUser,

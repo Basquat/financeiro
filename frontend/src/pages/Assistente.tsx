@@ -684,7 +684,7 @@ export default function Assistente() {
   const [editing, setEditing] = useState(false);
 
   const s = settings.data;
-  const ready = !!s && s.hasKey && !!s.provider && !!s.model;
+  const ready = !!s && (s.platformAi || (s.hasKey && !!s.provider && !!s.model));
 
   return (
     <AppShell title="Assistente">

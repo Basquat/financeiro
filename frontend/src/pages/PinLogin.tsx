@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiError } from '@/lib/api';
-import { useAuthActions } from '@/hooks/useAuth';
+import { useAuth, useAuthActions } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/primitives';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 
@@ -9,7 +9,9 @@ const PIN_LENGTH = 6;
 
 export default function PinLogin() {
   const navigate = useNavigate();
-  const { pinLogin } = useAuthActions();
+  const { pinLogin, logout } = useAuthActions();
+  const { isLocked } = useAuth();
+  const [fails, setFails] = useState(0);
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -31,6 +33,9 @@ export default function PinLogin() {
     } catch (err) {
       setPin('');
       setError(apiError(err));
+      // ponytail: client-side gate, the server wipes the PIN after 5 misses; a locked app falls back to the password.
+      if (isLocked && fails + 1 >= 5) logout();
+      setFails(fails + 1);
     } finally {
       setBusy(false);
     }
@@ -41,9 +46,6 @@ export default function PinLogin() {
     if (pin.length >= PIN_LENGTH) return;
     const next = pin + digit;
     setPin(next);
-    if (next.length >= 4) {
-      submit();
-    }
   }
 
   function backspace() {
@@ -52,6 +54,7 @@ export default function PinLogin() {
   }
 
   function goToEmailLogin() {
+    if (isLocked) logout();
     navigate('/login');
   }
 
@@ -76,13 +79,13 @@ export default function PinLogin() {
         )}
 
         <div className="grid w-full grid-cols-3 gap-3">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map((key) => {
-            const isAction = key === '.' || key === '⌫';
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9', '✓', '0', '⌫'].map((key) => {
+            const isAction = key === '⌫' && !pin;
             return (
               <button
                 key={key}
-                onClick={() => (key === '⌫' ? backspace() : key === '.' ? undefined : press(key))}
-                disabled={isAction}
+                onClick={() => (key === '⌫' ? backspace() : key === '✓' ? submit() : press(key))}
+                disabled={isAction || (key === '✓' && pin.length < 4)}
                 className={`flex h-14 items-center justify-center rounded-xl text-[18px] font-medium transition focus-ring ${
                   isAction
                     ? 'invisible'

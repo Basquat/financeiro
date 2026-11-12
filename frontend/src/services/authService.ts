@@ -8,10 +8,26 @@ export const authService = {
     return data;
   },
 
-  async register(name: string, email: string, password: string): Promise<AuthResult> {
-    const { data } = await api.post<AuthResult>('/auth/register', { name, email, password });
+  /** With e-mail verification on there is no token yet: null sends the user to the code step. */
+  async register(name: string, email: string, password: string): Promise<AuthResult | null> {
+    const { data } = await api.post<AuthResult & { verificationRequired?: boolean }>('/auth/register', { name, email, password });
+    if (data.verificationRequired) return null;
     tokenStore.set(data.token);
     return data;
+  },
+
+  async verify(email: string, code: string): Promise<AuthResult> {
+    const { data } = await api.post<AuthResult>('/auth/verify', { email, code });
+    tokenStore.set(data.token);
+    return data;
+  },
+
+  async forgot(email: string): Promise<void> {
+    await api.post('/auth/forgot', { email });
+  },
+
+  async reset(email: string, code: string, newPassword: string): Promise<void> {
+    await api.post('/auth/reset', { email, code, newPassword });
   },
 
   async me(): Promise<User> {

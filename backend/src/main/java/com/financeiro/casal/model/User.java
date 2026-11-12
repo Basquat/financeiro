@@ -90,6 +90,9 @@ public class User implements UserDetails {
     @Column(name = "pin_enabled")
     private Boolean pinEnabled = false;
 
+    /** null = account created before verification existed, counts as verified. */
+    private Boolean emailVerified;
+
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> roles;
 
