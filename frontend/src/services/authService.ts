@@ -2,8 +2,14 @@ import { api, tokenStore } from '@/lib/api';
 import type { AuthResult, User } from '@/types';
 
 export const authService = {
-  async login(email: string, password: string): Promise<AuthResult> {
-    const { data } = await api.post<AuthResult>('/auth/login', { email, password });
+  /** only30Days: the session ends after 30 days; otherwise it stays open until logout. The device remembers the choice. */
+  async login(email: string, password: string, only30Days = false): Promise<AuthResult> {
+    const { data } = await api.post<AuthResult>('/auth/login', { email, password, only30Days });
+    try {
+      localStorage.setItem('financeiro.only30', only30Days ? '1' : '0');
+    } catch {
+      /* noop */
+    }
     tokenStore.set(data.token);
     return data;
   },
@@ -37,7 +43,7 @@ export const authService = {
 
   async pinLogin(pin: string): Promise<AuthResult> {
     const email = localStorage.getItem('financeiro.pin_email') ?? '';
-    const { data } = await api.post<AuthResult>('/auth/pin/login', { email, pin });
+    const { data } = await api.post<AuthResult>('/auth/pin/login', { email, pin, only30Days: localStorage.getItem('financeiro.only30') === '1' });
     tokenStore.set(data.token);
     return data;
   },

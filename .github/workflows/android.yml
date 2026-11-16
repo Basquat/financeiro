@@ -80,12 +80,12 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace assembleDebug
 
-      - run: cp frontend/android/app/build/outputs/apk/debug/app-debug.apk financas-do-casal.apk
+      - run: cp frontend/android/app/build/outputs/apk/debug/app-debug.apk finance-plus.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: financas-do-casal-apk
-          path: financas-do-casal.apk
+          name: finance-plus-apk
+          path: finance-plus.apk
           if-no-files-found: error
 
       - name: Release "mobile-latest"
@@ -96,9 +96,9 @@ jobs:
           name: APK de teste (mais recente)
           body: |
             APK de teste. Backend: `${{ steps.cfg.outputs.url }}` — commit ${{ github.sha }}.
-            Baixe `financas-do-casal.apk`, transfira para o celular e instale
+            Baixe `finance-plus.apk`, transfira para o celular e instale
             (permita "instalar de fontes desconhecidas").
-          files: financas-do-casal.apk
+          files: finance-plus.apk
           make_latest: "false"
 
       - name: Logs do npm (se falhar)

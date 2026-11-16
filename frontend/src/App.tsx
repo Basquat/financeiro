@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -11,6 +12,7 @@ import Importar from '@/pages/Importar';
 import Legal from '@/pages/Legal';
 import Login from '@/pages/Login';
 import PinLogin from '@/pages/PinLogin';
+import { scheduleDailyReminders } from '@/lib/notify';
 import Planejar from '@/pages/Planejar';
 import Profile from '@/pages/Profile';
 import Transactions from '@/pages/Transactions';
@@ -36,6 +38,9 @@ function Splash() {
 function Shell() {
   useAuthBootstrap();
   const { isLoading, isAuthenticated, isLocked } = useAuth();
+  useEffect(() => {
+    if (isAuthenticated) void scheduleDailyReminders();
+  }, [isAuthenticated]);
 
   if (isLoading) return <Splash />;
   if (isLocked) return <PinLogin />;

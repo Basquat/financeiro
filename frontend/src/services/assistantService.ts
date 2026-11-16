@@ -30,6 +30,18 @@ export const assistantService = {
     return data;
   },
 
+  /** Starts the answer on the server; it keeps going if the app is closed. */
+  async startChat(messages: ChatTurn[], attachment?: ChatAttachment): Promise<string> {
+    const { data } = await api.post<{ id: string }>('/assistant/chat/start', { messages, attachment });
+    return data.id;
+  },
+
+  /** null while the answer is still being worked on. */
+  async chatJob(id: string): Promise<ChatReply | null> {
+    const { data } = await api.get<ChatReply & { status?: string }>(`/assistant/chat/${id}`);
+    return data.status === 'running' ? null : data;
+  },
+
   async telegramStatus(): Promise<{ enabled: boolean; linked: boolean; botUsername: string }> {
     const { data } = await api.get('/telegram/status');
     return data;

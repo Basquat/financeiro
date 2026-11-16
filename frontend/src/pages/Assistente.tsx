@@ -17,7 +17,9 @@ import { Button, Card, EmptyState, IconButton, Pill, cx } from '@/components/ui/
 import { useCurrentUser } from '@/hooks/useAuth';
 import { useAccounts } from '@/hooks/useData';
 import { useUi } from '@/hooks/useUi';
+import axios from 'axios';
 import { apiError } from '@/lib/api';
+import { askNotifications, notify } from '@/lib/notify';
 import { money, shortDate } from '@/lib/format';
 import { assistantService } from '@/services/assistantService';
 import type { Account, AssistantAction, AssistantSettings, ChatAttachment, ChatTurn } from '@/types';
@@ -40,7 +42,7 @@ interface Item {
 const SETTINGS_KEY = ['assistant-settings'] as const;
 const MAX_ITEMS = 40;
 const MAX_FILE = 8 * 1024 * 1024;
-const ACCEPT = 'application/pdf,image/png,image/jpeg,image/webp';
+const ACCEPT = 'application/pdf,image/png,image/jpeg,image/webp,.ofx,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.csv,.tsv,.json,.xml,.md';
 const MONTH_SUMMARY = 'Me dá um resumo do meu mês';
 const SUGGESTIONS = [
   MONTH_SUMMARY,
@@ -157,6 +159,47 @@ async function toAttachment(file: File): Promise<ChatAttachment> {
   // some Android pickers leave file.type empty
   const mediaType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
   return { name: file.name, mediaType, data };
+}
+
+/* ---------- background answers ---------- */
+
+const pendingKey = (uid: number) => `financeiro.assistant.pending.${uid}`;
+const watching = new Map<number, Promise<void>>();
+
+/**
+ * Waits for the answer of the job saved for this user and appends it to the stored conversation.
+ * Lives outside the component, so leaving the tab doesn't drop it; after the app is closed it resumes on next open.
+ */
+function watchReply(uid: number): Promise<void> {
+  const id = localStorage.getItem(pendingKey(uid));
+  if (!id) return Promise.resolve();
+  const running = watching.get(uid);
+  if (running) return running;
+  const job = (async () => {
+    let item: Item;
+    for (;;) {
+      try {
+        const res = await assistantService.chatJob(id);
+        if (res) {
+          item = { role: 'assistant', content: res.reply, actions: res.actions.map((a) => ({ ...a, status: 'pending' })) };
+          break;
+        }
+      } catch (err) {
+        if (!(axios.isAxiosError(err) && !err.response)) {
+          item = { role: 'assistant', content: apiError(err), error: true };
+          break;
+        } // offline for a moment: keep waiting
+      }
+      await new Promise((r) => setTimeout(r, 2500));
+    }
+    saveItems(uid, [...loadItems(uid), item]);
+    localStorage.removeItem(pendingKey(uid));
+    if (document.hidden || !location.pathname.startsWith('/assistente')) {
+      void notify('Assistente respondeu', item.content.slice(0, 140) || 'Sua resposta está pronta.');
+    }
+  })().finally(() => watching.delete(uid));
+  watching.set(uid, job);
+  return job;
 }
 
 /* ---------- setup ---------- */
@@ -461,6 +504,15 @@ function Chat({ userId, settings, onConfigure }: { userId: number; settings: Ass
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!localStorage.getItem(pendingKey(userId))) return;
+    setSending(true);
+    void watchReply(userId).then(() => {
+      setItems(loadItems(userId));
+      setSending(false);
+    });
+  }, [userId]);
+
+  useEffect(() => {
     saveItems(userId, items);
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [items, userId]);
@@ -483,15 +535,15 @@ function Chat({ userId, settings, onConfigure }: { userId: number; settings: Ass
     }
     const next: Item[] = [...items, { role: 'user', content: body || 'Analise o anexo.', file: file?.name }];
     setItems(next);
+    saveItems(userId, next);
     setText('');
     setFile(null);
     setSending(true);
+    void askNotifications();
     try {
-      const res = await assistantService.chat(toTurns(next), attachment);
-      setItems([
-        ...next,
-        { role: 'assistant', content: res.reply, actions: res.actions.map((a) => ({ ...a, status: 'pending' })) },
-      ]);
+      localStorage.setItem(pendingKey(userId), await assistantService.startChat(toTurns(next), attachment));
+      await watchReply(userId);
+      setItems(loadItems(userId));
     } catch (err) {
       setItems([...next, { role: 'assistant', content: apiError(err), error: true }]);
     } finally {
@@ -692,6 +744,10 @@ export default function Assistente() {
         <Loading />
       ) : settings.isError || !s ? (
         <LoadError error={settings.error} onRetry={() => void settings.refetch()} />
+      ) : !s.available ? (
+        <EmptyState title="Em desenvolvimento" art={<SparklesIcon className="mx-auto h-full text-brand" />}>
+          O assistente com IA está em testes e chega para todos em breve.
+        </EmptyState>
       ) : ready && !editing ? (
         <Chat userId={user.id} settings={s} onConfigure={() => setEditing(true)} />
       ) : (

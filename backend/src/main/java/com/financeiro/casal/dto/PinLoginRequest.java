@@ -10,4 +10,6 @@ public class PinLoginRequest {
 
     @NotBlank(message = "PIN is required")
     private String pin;
+
+    private boolean only30Days;
 }

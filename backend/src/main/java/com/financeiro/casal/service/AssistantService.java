@@ -19,6 +19,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -33,10 +34,19 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
+import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -49,7 +59,7 @@ public class AssistantService {
     public record Provider(String id, String label, String baseUrl) {}
 
     public record Settings(List<Provider> providers, String provider, String model,
-                           boolean hasKey, String keyHint, String notes, boolean platformAi) {}
+                           boolean hasKey, String keyHint, String notes, boolean platformAi, boolean available) {}
 
     public record ChatMessage(String role, String content) {}
 
@@ -82,7 +92,10 @@ public class AssistantService {
     static final int MAX_HISTORY = 40;
     static final int MAX_MESSAGE_CHARS = 20_000;
     static final int MAX_FILE_BYTES = 8 * 1024 * 1024;
-    static final int MAX_PDF_TEXT = 15_000;
+    static final int MAX_DOC_TEXT = 15_000;
+    static final int MAX_UNZIPPED = 20 * 1024 * 1024;
+    static final Set<String> TEXT_EXT = Set.of("txt", "csv", "tsv", "json", "xml", "md", "html", "htm");
+    static final Set<String> ZIP_EXT = Set.of("docx", "xlsx", "pptx", "odt", "ods", "odp");
     static final Set<String> IMAGE_TYPES = Set.of("image/png", "image/jpeg", "image/webp");
 
     private static final String PROMPT = """
@@ -96,6 +109,13 @@ public class AssistantService {
             Para criar, editar, excluir, pagar ou guardar qualquer coisa, chame a ferramenta. Ela NÃO executa \
             na hora: vira um card que o usuário confirma. Depois de chamar, diga numa frase o que preparou e \
             peça para confirmar no card. Se faltar um dado obrigatório (ex.: em qual conta), pergunte antes.
+
+            Fora dos números do usuário, use seu conhecimento geral do mundo real: explique conceitos (juros \
+            compostos, CDI, Selic, inflação, IR, FGTS, rotativo do cartão, reserva de emergência, tipos de \
+            investimento), compare opções e dê contexto do Brasil. Deixe claro quando algo é regra geral e pode \
+            ter mudado, e não recomende comprar um ativo específico.
+
+            Extratos OFX anexados: para lançar vários de uma vez, use importar_extrato (ele ignora o que já existe).
 
             Comprovantes e documentos anexados: encontre valor, data, quem pagou ou recebeu e se é entrada ou \
             saída; sugira uma categoria curta (Mercado, Transporte, Moradia, Salário...) e a conta mais provável, \
@@ -121,6 +141,7 @@ public class AssistantService {
     @Value("${app.ai.server-provider:google}") private String serverProvider;
     @Value("${app.ai.server-model:gemini-2.5-flash-lite}") private String serverModel;
     @Value("${app.ai.daily-limit:30}") private int dailyLimit;
+    @Value("${app.ai.owner-email:joaodan.lisboa@gmail.com}") private String ownerEmail;
     // ponytail: in-memory per-user counter, resets on restart and isn't shared across instances; move to the DB if we scale out.
     private final java.util.Map<Long, long[]> quota = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -157,12 +178,25 @@ public class AssistantService {
         User u = userService.getById(user.getId());
         String key = tryDecrypt(u.getAiKeyEnc());
         String hint = key == null ? null : "••••" + key.substring(Math.max(0, key.length() - 4));
-        return new Settings(PROVIDERS, u.getAiProvider(), u.getAiModel(), key != null, hint, u.getAiNotes(), !serverKey.isBlank());
+        return new Settings(PROVIDERS, u.getAiProvider(), u.getAiModel(), key != null, hint, u.getAiNotes(),
+                !serverKey.isBlank(), available(u));
+    }
+
+    // ponytail: owner e-mails (comma-separated) while the assistant is in development; a role column when there are many testers.
+    public boolean available(User user) {
+        return user.getEmail() != null
+                && Arrays.stream(ownerEmail.split(",")).anyMatch(e -> e.strip().equalsIgnoreCase(user.getEmail()));
+    }
+
+    /** Every assistant entry point (web chat, cards, Telegram) goes through this. */
+    public void requireAccess(User user) {
+        if (!available(user)) throw new RuntimeException("O assistente ainda está em desenvolvimento.");
     }
 
     /** {@code apiKey}: null keeps the saved one, blank removes it. {@code notes}: null keeps them. */
     public Settings saveSettings(User user, String provider, String model, String apiKey, String notes) {
         User u = userService.getById(user.getId());
+        requireAccess(u);
         if (provider != null && !provider.isBlank()) provider(provider);
         u.setAiProvider(provider == null || provider.isBlank() ? null : provider);
         u.setAiModel(limit(model == null ? null : model.strip(), 200, "Nome do modelo muito longo"));
@@ -178,6 +212,7 @@ public class AssistantService {
     /** Model ids the provider offers for this key (typed key, or the saved one when blank). */
     public List<String> models(User user, String providerId, String apiKey) {
         User u = userService.getById(user.getId());
+        requireAccess(u);
         String key = apiKey == null || apiKey.isBlank() ? tryDecrypt(u.getAiKeyEnc()) : apiKey.strip();
         if (key == null) throw new RuntimeException("Informe a chave da API");
         JsonNode res = callProvider(provider(providerId), key, "/models", null);
@@ -189,6 +224,7 @@ public class AssistantService {
 
     public ChatReply chat(User user, List<ChatMessage> history, Attachment attachment) {
         User u = userService.getById(user.getId());
+        requireAccess(u);
         Provider provider;
         String key;
         String model;
@@ -289,14 +325,14 @@ public class AssistantService {
             boolean last = i == recent.size() - 1;
             ObjectNode out = messages.addObject().put("role", m.role());
             if (last && attachment != null) {
-                out.set("content", withAttachment(text.isBlank() ? "Analise o anexo." : text, attachment));
+                out.set("content", withAttachment(text.isBlank() ? "Analise o anexo." : text, attachment, text));
             } else {
                 out.put("content", text);
             }
         }
     }
 
-    private JsonNode withAttachment(String text, Attachment a) {
+    private JsonNode withAttachment(String text, Attachment a, String question) {
         String name = a.name() == null ? "arquivo" : limit(a.name(), 100, "Nome de arquivo muito longo");
         String data = a.data() == null ? "" : a.data().substring(a.data().indexOf(',') + 1); // tolerate data: URLs
         byte[] bytes;
@@ -308,18 +344,21 @@ public class AssistantService {
         if (bytes.length == 0) throw new RuntimeException("Arquivo vazio");
         if (bytes.length > MAX_FILE_BYTES) throw new RuntimeException("Arquivo muito grande (máx. 8 MB)");
 
+        String ext = name.contains(".") ? name.substring(name.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT) : "";
+        String type = a.mediaType() == null ? "" : a.mediaType();
         StringBuilder prompt = new StringBuilder(text).append("\n\n[Anexo: ").append(name).append("]\n");
         ArrayNode images = json.createArrayNode();
-        if ("application/pdf".equals(a.mediaType())) {
-            try (PDDocument doc = Loader.loadPDF(bytes)) {
+        String doc = null;
+        if ("application/pdf".equals(type) || "pdf".equals(ext)) {
+            try (PDDocument pdf = Loader.loadPDF(bytes)) {
                 PDFTextStripper stripper = new PDFTextStripper();
-                stripper.setEndPage(10);
-                String pdfText = stripper.getText(doc).strip();
+                stripper.setEndPage(200);
+                String pdfText = stripper.getText(pdf).strip();
                 if (pdfText.length() >= 20) {
-                    prompt.append(pdfText, 0, Math.min(pdfText.length(), MAX_PDF_TEXT));
+                    doc = pdfText;
                 } else { // scanned PDF: no text layer, send the first pages as images
-                    PDFRenderer renderer = new PDFRenderer(doc);
-                    for (int i = 0; i < Math.min(2, doc.getNumberOfPages()); i++) {
+                    PDFRenderer renderer = new PDFRenderer(pdf);
+                    for (int i = 0; i < Math.min(2, pdf.getNumberOfPages()); i++) {
                         ByteArrayOutputStream png = new ByteArrayOutputStream();
                         ImageIO.write(renderer.renderImageWithDPI(i, 110), "png", png);
                         images.add(imagePart("image/png", png.toByteArray()));
@@ -331,10 +370,25 @@ public class AssistantService {
             } catch (IOException e) {
                 throw new RuntimeException("Não consegui ler esse PDF.");
             }
-        } else if (IMAGE_TYPES.contains(a.mediaType())) {
-            images.add(imagePart(a.mediaType(), bytes));
+        } else if (IMAGE_TYPES.contains(type)) {
+            images.add(imagePart(type, bytes));
+        } else if ("ofx".equals(ext) || type.contains("ofx")) {
+            List<ImportService.Row> rows = ImportService.parseOfx(ImportService.decode(bytes));
+            if (rows.isEmpty()) throw new RuntimeException("Não encontrei lançamentos nesse OFX.");
+            StringBuilder sb = new StringBuilder("Extrato OFX (data | descrição | valor, negativo = saída | categoria sugerida):\n");
+            rows.forEach(r -> sb.append(r.date()).append(" | ").append(r.title()).append(" | ")
+                    .append(r.amount()).append(" | ").append(r.category()).append('\n'));
+            doc = sb.toString();
+        } else if (ZIP_EXT.contains(ext)) {
+            doc = officeText(bytes);
+        } else if (TEXT_EXT.contains(ext) || type.startsWith("text/")) {
+            doc = ImportService.decode(bytes);
         } else {
-            throw new RuntimeException("Tipo de arquivo não suportado. Envie PDF, PNG, JPG ou WEBP.");
+            throw new RuntimeException("Tipo de arquivo não suportado. Envie PDF, OFX, DOCX, XLSX, PPTX, ODT, TXT, CSV ou imagem.");
+        }
+        if (doc != null) {
+            if (doc.isBlank()) throw new RuntimeException("Não encontrei texto nesse arquivo.");
+            prompt.append(relevant(doc, question, MAX_DOC_TEXT));
         }
 
         // plain string when there are no images: text-only providers reject the array form
@@ -349,6 +403,73 @@ public class AssistantService {
         ObjectNode part = json.createObjectNode().put("type", "image_url");
         part.putObject("image_url").put("url", "data:" + mediaType + ";base64," + Base64.getEncoder().encodeToString(bytes));
         return part;
+    }
+
+    private static final Pattern OFFICE_PARTS = Pattern.compile(
+            "word/document\\.xml|xl/sharedStrings\\.xml|xl/worksheets/sheet\\d+\\.xml|ppt/slides/slide\\d+\\.xml|content\\.xml");
+
+    /** Text of an Office Open XML / OpenDocument file: read its XML parts, keep line breaks, drop tags. */
+    static String officeText(byte[] bytes) {
+        StringBuilder out = new StringBuilder();
+        int total = 0;
+        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(bytes))) {
+            for (ZipEntry e; (e = zip.getNextEntry()) != null; ) {
+                if (!OFFICE_PARTS.matcher(e.getName()).matches()) continue;
+                byte[] xml = zip.readNBytes(MAX_UNZIPPED - total + 1); // zip-bomb guard
+                total += xml.length;
+                if (total > MAX_UNZIPPED) throw new RuntimeException("Arquivo grande demais depois de descompactado.");
+                out.append(new String(xml, StandardCharsets.UTF_8)
+                        .replaceAll("</(w:p|a:p|text:p|text:h|row)>", "\n")
+                        .replaceAll("<(w:tab|text:tab)/>|</c>", "\t")
+                        .replaceAll("<[^>]+>", "")
+                        .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'")
+                        .replace("&amp;", "&"))
+                        .append('\n');
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Não consegui ler esse arquivo. Ele está corrompido?");
+        }
+        return out.toString().replaceAll("[ \\t]*\\n\\s*\\n+", "\n").strip();
+    }
+
+    /**
+     * Retrieval for long documents: split into ~1.2k-char chunks, score each by how many words of the question it
+     * contains, keep the first chunk (headers) plus the best ones up to {@code budget}, in document order.
+     */
+    // ponytail: keyword overlap, no embeddings; fine for statements/contracts, add embeddings if recall suffers.
+    static String relevant(String doc, String question, int budget) {
+        if (doc.length() <= budget) return doc;
+        List<String> chunks = new ArrayList<>();
+        for (int i = 0; i < doc.length(); ) {
+            int end = Math.min(doc.length(), i + 1200);
+            int nl = doc.lastIndexOf('\n', end);
+            if (end < doc.length() && nl > i + 400) end = nl + 1;
+            chunks.add(doc.substring(i, end));
+            i = end;
+        }
+        List<String> words = Arrays.stream(fold(question == null ? "" : question).split("[^a-z0-9]+"))
+                .filter(w -> w.length() >= 3).distinct().toList();
+        List<Integer> order = new ArrayList<>(IntStream.range(1, chunks.size()).boxed().toList());
+        order.sort(Comparator.comparingLong(c -> -words.stream().filter(fold(chunks.get(c))::contains).count()));
+        TreeSet<Integer> keep = new TreeSet<>(List.of(0));
+        int used = chunks.get(0).length();
+        for (int c : order) {
+            if (used + chunks.get(c).length() > budget) continue;
+            keep.add(c);
+            used += chunks.get(c).length();
+        }
+        StringBuilder out = new StringBuilder("(Documento longo: seguem os trechos mais relevantes para a pergunta)\n");
+        int prev = -1;
+        for (int c : keep) {
+            if (prev >= 0 && c != prev + 1) out.append("\n[...]\n");
+            out.append(chunks.get(c));
+            prev = c;
+        }
+        return out.toString();
+    }
+
+    private static String fold(String s) {
+        return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
     }
 
     // ---------- helpers ----------

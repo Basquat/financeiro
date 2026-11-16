@@ -68,7 +68,7 @@ public class AuthController {
         if (user.isPresent()) {
             return ResponseEntity.ok(Map.of(
                     "user", toDTO(user.get()),
-                    "token", jwtService.generateToken(user.get())
+                    "token", jwtService.generateToken(user.get(), request.isOnly30Days())
             ));
         }
         return ResponseEntity.status(401).body(Map.of("error", "Credenciais inválidas"));
@@ -135,7 +135,7 @@ public class AuthController {
         if (user.isPresent()) {
             return ResponseEntity.ok(Map.of(
                     "user", toDTO(user.get()),
-                    "token", jwtService.generateToken(user.get())
+                    "token", jwtService.generateToken(user.get(), request.isOnly30Days())
             ));
         }
         return ResponseEntity.status(401).body(Map.of("error", "PIN inválido"));

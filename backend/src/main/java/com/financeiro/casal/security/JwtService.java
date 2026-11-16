@@ -15,22 +15,27 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    private final SecretKey key;
-    private final long expirationMs;
+    // A session stays open until logout (the PIN guards the device); "trust 30 days" caps it on shared devices.
+    static final long FOREVER_MS = 3650L * 24 * 60 * 60 * 1000;
+    static final long TRUST_30_DAYS_MS = 30L * 24 * 60 * 60 * 1000;
 
-    public JwtService(
-            @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration:43200000}") long expirationMs) {
+    private final SecretKey key;
+
+    public JwtService(@Value("${app.jwt.secret}") String secret) {
         // An empty/short secret would make tokens forgeable: refuse to start instead.
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) {
             throw new IllegalStateException("JWT_SECRET deve ter pelo menos 32 bytes");
         }
         this.key = Keys.hmacShaKeyFor(bytes);
-        this.expirationMs = expirationMs;
     }
 
     public String generateToken(User user) {
+        return generateToken(user, false);
+    }
+
+    public String generateToken(User user, boolean only30Days) {
+        long expirationMs = only30Days ? TRUST_30_DAYS_MS : FOREVER_MS;
         Date now = new Date();
         return Jwts.builder()
                 .subject(user.getEmail())

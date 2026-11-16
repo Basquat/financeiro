@@ -152,6 +152,8 @@ export interface AssistantSettings {
   model?: string | null;
   hasKey: boolean;
   platformAi: boolean;
+  /** false = assistant still in development for this account */
+  available: boolean;
   keyHint?: string | null;
   notes?: string | null;
 }

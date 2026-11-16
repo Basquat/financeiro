@@ -91,7 +91,6 @@ SPRING_DATASOURCE_PASSWORD=senha
 
 # Segurança
 JWT_SECRET=chave-secreta-minimo-32-caracteres
-JWT_EXPIRATION_MS=86400000
 JWT_REFRESH_EXPIRATION_MS=604800000
 
 # Email (para notificações)

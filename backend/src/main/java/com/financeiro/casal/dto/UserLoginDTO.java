@@ -19,4 +19,7 @@ public class UserLoginDTO {
 
     @NotBlank(message = "Senha é obrigatória")
     private String password;
+
+    /** Session ends after 30 days instead of staying open until logout. */
+    private boolean only30Days;
 }

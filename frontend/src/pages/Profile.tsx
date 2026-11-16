@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { money } from '@/lib/format';
 import { apiError } from '@/lib/api';
 import { authService } from '@/services/authService';
-import { useAuth, useAuthActions, useAuthStore } from '@/hooks/useAuth';
+import { useAuth, useAuthActions, useAuthStore, pinOnDevice, setPinOnDevice } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/useData';
 import { useUi } from '@/hooks/useUi';
 import { AppShell } from '@/components/layout/AppShell';
@@ -94,7 +94,7 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const pinEnabled = !!user?.pinEnabled;
+  const pinEnabled = !!user?.pinEnabled && pinOnDevice();
 
   async function handleSetPin() {
     setError(null);
@@ -109,6 +109,7 @@ export default function Profile() {
     setBusy(true);
     try {
       const { user: updated } = await authService.setPin(password, pin);
+      setPinOnDevice(true);
       setUser(updated);
       setPinMode('idle');
       setPin('');
@@ -126,6 +127,7 @@ export default function Profile() {
     setBusy(true);
     try {
       const { user: updated } = await authService.disablePin(password);
+      setPinOnDevice(false);
       setUser(updated);
       setPinMode('idle');
       setPassword('');

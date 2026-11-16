@@ -131,7 +131,7 @@ public class ImportService {
     }
 
     /** OFX headers declare the charset; Brazilian banks mostly send windows-1252. */
-    private static String decode(byte[] bytes) {
+    static String decode(byte[] bytes) {
         String head = new String(bytes, 0, Math.min(bytes.length, 400), StandardCharsets.ISO_8859_1).toUpperCase(Locale.ROOT);
         Charset cs = head.contains("UTF-8") || head.contains("CHARSET:UTF") ? StandardCharsets.UTF_8 : Charset.forName("windows-1252");
         return new String(bytes, cs);

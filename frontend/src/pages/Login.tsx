@@ -13,6 +13,7 @@ export default function Login() {
   const { login, register, verify } = useAuthActions();
   const [code, setCode] = useState('');
   const [accepted, setAccepted] = useState(false);
+  const [only30, setOnly30] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('login');
   const [name, setName] = useState('');
@@ -34,7 +35,7 @@ export default function Login() {
     setBusy(true);
     try {
       if (mode === 'login') {
-        await login(email.trim(), password);
+        await login(email.trim(), password, only30);
       } else if (mode === 'register') {
         if (!(await register(name.trim(), email.trim(), password))) go('verify', 'Enviamos um código de 6 dígitos para o seu e-mail.');
       } else if (mode === 'verify') {
@@ -116,6 +117,13 @@ export default function Login() {
               />
             )}
           </Field>}
+
+          {mode === 'login' && (
+            <label className="flex items-start gap-2 text-[13px] text-text-mute">
+              <input type="checkbox" checked={only30} onChange={(e) => setOnly30(e.target.checked)} className="mt-0.5" />
+              <span>Confiar neste aparelho só por 30 dias (depois pede a senha de novo)</span>
+            </label>
+          )}
 
           {mode === 'register' && (
             <label className="flex items-start gap-2 text-[13px] text-text-mute">

@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:telegram-test;DB_CLOSE_DELAY=-1;MODE=LEGACY",
-        "app.telegram.token=test-token", "app.telegram.secret=s3cret", "app.telegram.bot-username=financeplus_bot"})
+        "app.telegram.token=test-token", "app.telegram.secret=s3cret", "app.telegram.bot-username=financeplus_bot", "app.ai.owner-email=bia@app.com"})
 class TelegramIntegrationTest {
 
     @Autowired

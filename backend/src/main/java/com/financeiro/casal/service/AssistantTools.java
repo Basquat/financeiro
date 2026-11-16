@@ -82,6 +82,7 @@ public class AssistantTools {
     private final InstallmentPlanRepository installmentPlanRepository;
     private final SharedGoalRepository sharedGoalRepository;
     private final UserRepository userRepository;
+    private final ImportService importService;
     private final ObjectMapper json;
     private final Validator validator;
 
@@ -205,6 +206,18 @@ public class AssistantTools {
                 obj(byId, "id"), true, (u, a) -> ok(recurring.delete(u, id(a))));
         add("lancar_recorrente", "Lançar conta fixa do mês", "Lança a ocorrência deste mês de uma conta fixa pendente.",
                 obj(byId, "id"), true, (u, a) -> ok(recurring.post(u, id(a))));
+
+        add("importar_extrato", "Importar extrato",
+                "Lança de uma vez os lançamentos de um extrato (ex.: OFX anexado) numa conta; ignora os que já existem.",
+                obj(Map.of("accountId", prop("integer", "id da conta do extrato"),
+                        "rows", Map.of("type", "array", "description", "Lançamentos a importar",
+                                "items", obj(Map.of("date", prop("string", "AAAA-MM-DD"),
+                                        "title", prop("string", "Descrição"),
+                                        "amount", prop("number", "Valor; negativo = saída, positivo = entrada"),
+                                        "category", prop("string", "Categoria curta")), "date", "title", "amount"))),
+                        "accountId", "rows"), true,
+                (u, a) -> Map.of("importados", importService.commit(a.path("accountId").asLong(),
+                        json.convertValue(a.get("rows"), json.getTypeFactory().constructCollectionType(List.class, ImportService.CommitRow.class)), u)));
 
         add("definir_limites_categoria", "Limites por categoria",
                 "Define o limite mensal de gasto por categoria; envie só as que mudam (0 remove o limite).",

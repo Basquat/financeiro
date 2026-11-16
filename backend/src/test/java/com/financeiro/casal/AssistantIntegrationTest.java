@@ -28,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@TestPropertySource(properties = "spring.datasource.url=jdbc:h2:mem:assistant-test;DB_CLOSE_DELAY=-1;MODE=LEGACY")
+@TestPropertySource(properties = {"spring.datasource.url=jdbc:h2:mem:assistant-test;DB_CLOSE_DELAY=-1;MODE=LEGACY",
+        "app.ai.owner-email=dono@casa.app,outro@casa.app,memoria@casa.app,chave@casa.app,chat@casa.app"})
 class AssistantIntegrationTest {
 
     @Autowired

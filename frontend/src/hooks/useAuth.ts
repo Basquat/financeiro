@@ -18,6 +18,26 @@ interface AuthState {
   logout: () => void;
 }
 
+const PIN_KEY = 'financeiro.pin_enabled';
+export const pinOnDevice = () => {
+  try {
+    return localStorage.getItem(PIN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+export const setPinOnDevice = (on: boolean) => {
+  try {
+    if (on) localStorage.setItem(PIN_KEY, 'true');
+    else {
+      localStorage.removeItem(PIN_KEY);
+      localStorage.removeItem('financeiro.pin_email');
+    }
+  } catch {
+    /* noop */
+  }
+};
+
 const UNLOCK_KEY = 'financeiro.unlocked';
 const readUnlocked = () => {
   try {
@@ -44,10 +64,10 @@ const useAuthStore = create<AuthState>((set) => ({
     if (useAuthStore.getState().status === 'authenticated') useAuthStore.getState().unlock();
     set({ user, status: user ? 'authenticated' : 'anonymous' });
     try {
-      localStorage.setItem('financeiro.pin_enabled', user?.pinEnabled ? 'true' : 'false');
+      // The PIN is per device: only Profile turns it on here; the server can only turn it off (disabled/wiped).
+      if (user && !user.pinEnabled) setPinOnDevice(false);
       // The PIN only unlocks this account, so the PIN screen needs to know which one.
-      if (user?.pinEnabled) localStorage.setItem('financeiro.pin_email', user.email);
-      else localStorage.removeItem('financeiro.pin_email');
+      if (user && pinOnDevice()) localStorage.setItem('financeiro.pin_email', user.email);
     } catch {
       /* noop */
     }
@@ -98,7 +118,7 @@ export function useAuth() {
   return {
     user,
     status,
-    isLocked: status === 'authenticated' && !!user?.pinEnabled && !unlocked,
+    isLocked: status === 'authenticated' && !!user?.pinEnabled && pinOnDevice() && !unlocked,
     isLoading: status === 'loading',
     isAuthenticated: status === 'authenticated',
   };
@@ -110,8 +130,8 @@ export function useAuthActions() {
   const logout = useAuthStore((s) => s.logout);
 
   return {
-    async login(email: string, password: string) {
-      const { user } = await authService.login(email, password);
+    async login(email: string, password: string, only30Days = false) {
+      const { user } = await authService.login(email, password, only30Days);
       useAuthStore.getState().unlock();
       setUser(user);
     },
