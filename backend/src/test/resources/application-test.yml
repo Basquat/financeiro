@@ -1,7 +1,5 @@
 # Profile used by ApiIntegrationTest — throwaway in-memory H2, recriada a cada run.
 spring:
-  flyway:
-    enabled: false # tests build the schema with Hibernate on H2; the migration is PostgreSQL-only
   sql:
     init:
       mode: never

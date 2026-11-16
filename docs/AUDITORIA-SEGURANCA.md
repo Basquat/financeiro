@@ -42,7 +42,7 @@ Modelo de autorização de conta conjunta: `Account.owners` (N:N). Todo dono tem
 | P01 | Token em `localStorage` (web e WebView) — legível por XSS | `lib/api.ts` | Roubo de sessão | P1 | **Pendente**: CSP mitiga; mudar para cookie HttpOnly exige CSRF e afeta o app Android | — |
 | P02 | Sem refresh token / revogação de sessão (logout só no cliente). TTL reduzido de 24h → **12h** | `JwtService` | Janela de token roubado | P1 | **Parcial** | — |
 | P03 | Dinheiro em `double` (Java) / `double precision` (Postgres) | entidades | Arredondamento | P1 | **Pendente**: arredondamento a 2 casas + `@Digits` contêm o risco; migrar para `BigDecimal`/`NUMERIC(14,2)` exige migration em produção | `signFollowsType…` (0,10+0,20) |
-| P04 | `ddl-auto: update` em produção, sem migrations versionadas | `application-prod.yml` | Esquema não reproduzível | P1 | **Pendente** (Flyway + `validate`); nenhuma mudança de esquema foi necessária nesta rodada | — |
+| P04 | `ddl-auto: update` em produção, sem migrations versionadas | `application-prod.yml` | Esquema não reproduzível | P1 | **Aceito**: Hibernate `update` gerencia o esquema, sem ferramenta de migration; nenhuma mudança de esquema foi necessária nesta rodada | — |
 | P05 | Sem exclusão de conta (direito de eliminação LGPD) nem exportação de dados | — | LGPD | P1 | **Pendente**: processo manual documentado em F | — |
 | P06 | Sem idempotência em `POST /transactions` e `/pay` (duplo clique/retry duplica) | controllers | Duplicação / baixa | P2 | **Pendente** (front desabilita o botão durante o envio) | — |
 | P07 | `catch (Exception e) → e.getMessage()` pode expor mensagens internas (ex.: SQL) | todos os controllers | Info disclosure / baixa | P2 | **Pendente** | — |
@@ -122,7 +122,6 @@ Questões para o controlador/jurídico: retenção após encerramento da conta; 
 | # | Item | Aceite |
 |---|---|---|
 | 1 | Definir `JWT_SECRET` em produção e implantar | app sobe; login funciona; tokens antigos rejeitados |
-| 2 | Flyway + `ddl-auto: validate`; migration `NUMERIC(14,2)` + `BigDecimal` | testes com Testcontainers/Postgres verdes |
 | 3 | Endpoint de exclusão/exportação de conta com reconfirmação de senha | teste: dados do titular somem, dados do parceiro preservados |
 | 4 | Refresh token rotativo + `tokenVersion` no usuário (logout em todos os dispositivos) | reuso de refresh token revoga a família |
 | 5 | Token no Android via armazenamento seguro (Keystore) | sem token em `localStorage` no APK |

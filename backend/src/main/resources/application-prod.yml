@@ -9,7 +9,7 @@ spring:
     password: ${DB_PASSWORD:${SUPABASE_DB_PASSWORD:postgres}}
   jpa:
     hibernate:
-      # ponytail: Flyway owns the schema from V1; update stays as a safety net for one deploy. Move to validate once prod boots clean, and put every new change in V2+.
+      # Hibernate builds and updates the schema (no migration tool).
       ddl-auto: update
     show-sql: false
 
